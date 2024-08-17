@@ -1,5 +1,7 @@
+ACCELERATE_LIB = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/Headers
+
 CC = clang
-CFLAGS = -Wall -Wextra -Iinclude/
+CFLAGS = -Wall -Wextra -Iinclude/ -I$(ACCELERATE_LIB)
 
 TARGETS = hello_world
 LIBS = q_patch_lib
@@ -17,10 +19,10 @@ find bin/ ! -name .gitignore -type f -delete
 all: $(BINS)
 
 $(BINS): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) -framework Accelerate
 
 out/%.o: src/%.c
-	$(CC) $(CFLAGS) -c $^ -o $@
+	$(CC) $(CFLAGS) -c $^ -o $@ -framework Accelerate
 
 clean:
 	$(CLEAN_COMMAND)
