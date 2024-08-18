@@ -1,23 +1,21 @@
 #include <stdio.h>
-#include "q_patch_lib.h"
 #include <cblas.h>
 
+#include "q_patch_lib.h"
+#include "num_linalg_lib.h"
+
 int main() {
-    // Define a 3x3 matrix and a 3x1 vector
-    double A[9] = {1.0, 2.0, 3.0,
-                   4.0, 5.0, 6.0,
-                   7.0, 8.0, 9.0};
-    double x[3] = {1.0, 0.0, -1.0};
-    double y[3] = {0.0, 0.0, 0.0};  // Result vector
+    phi_1D_t phi_1D = return_phi_1D();
 
-    // Perform the matrix-vector multiplication y = A * x
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, 3, 3, 1.0, A, 3, x, 1, 0.0, y, 1);
+    double mat_data_x[2] = {0.5, 0.25};
+    rd_mat_t x = {mat_data_x, 2, 1};
+    double mat_data_phi[2];
+    rd_mat_t phi_1D_vals = {mat_data_phi, 2, 1};
 
-    // Print the result
-    printf("Resulting vector y:\n");
-    for (int i = 0; i < 3; i++) {
-        printf("%f\n", y[i]);
+    phi_1D(x, phi_1D_vals);
+
+    for (size_t i = 0; i < phi_1D_vals.rows; i++) {
+        printf("%f\n", phi_1D_vals.mat_data[i]);
     }
-
     return 0;
 }

@@ -4,7 +4,7 @@ CC = clang
 CFLAGS = -Wall -Wextra -Iinclude/ -I$(ACCELERATE_LIB)
 
 TARGETS = hello_world
-LIBS = q_patch_lib
+LIBS = q_patch_lib num_linalg_lib
 
 OBJS = $(addprefix out/,$(LIBS:=.o)) $(addprefix out/,$(TARGETS:=.o)) 
 BINS = $(addprefix bin/,$(TARGETS))
