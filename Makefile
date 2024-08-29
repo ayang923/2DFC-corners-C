@@ -3,7 +3,7 @@ ACCELERATE_LIB = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.pla
 CC = clang
 CFLAGS = -Wall -Wextra -Iinclude/ -I$(ACCELERATE_LIB)
 
-TARGETS = hello_world
+TARGETS = main
 LIBS = q_patch_lib num_linalg_lib
 
 OBJS = $(addprefix out/,$(LIBS:=.o)) $(addprefix out/,$(TARGETS:=.o)) 

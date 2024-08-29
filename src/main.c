@@ -14,8 +14,17 @@ int main() {
 
     phi_1D(x, phi_1D_vals);
 
-    for (size_t i = 0; i < phi_1D_vals.rows; i++) {
-        printf("%f\n", phi_1D_vals.mat_data[i]);
+    // for (size_t i = 0; i < phi_1D_vals.rows; i++) {
+    //     printf("%f\n", phi_1D_vals.mat_data[i]);
+    // }
+
+    double xi_mesh_data[21];
+    rd_mat_t xi_mesh = {xi_mesh_data, 21, 1};
+    rd_linspace(0, 1, 21, xi_mesh);
+
+    for (size_t i = 0; i < xi_mesh.rows; i++) {
+        printf("%f\n", xi_mesh.mat_data[i]);
     }
+
     return 0;
 }

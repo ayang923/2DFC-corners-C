@@ -7,7 +7,7 @@
 
 void phi_1D(rd_mat_t x, rd_mat_t phi_1D_vals);
 
-void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, size_t n_xi, size_t n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t f_XY, phi_t phi) {
+void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, size_t n_xi, size_t n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t f_XY, phi_param_t phi_param) {
     q_patch->M_p = M_p;
     q_patch->J = J;
     q_patch->eps_xi_eta = eps_xi_eta;
@@ -23,6 +23,14 @@ void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, doubl
     q_patch->f_XY = f_XY;
 
     q_patch->phi_1D = (phi_1D_t) phi_1D;
+    q_patch->phi_param = phi_param;
+}
+
+void evaulate_M_p(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, rd_mat_t x, rd_mat_t y) {
+    q_patch->M_p(xi, eta, x, y, NULL);
+}
+void evaulate_J(q_patch_t *q_patch, rd_mat_t v, rd_mat_t J_vals) {
+    q_patch->J(v, J_vals, NULL);
 }
 
 phi_1D_t return_phi_1D(void) {

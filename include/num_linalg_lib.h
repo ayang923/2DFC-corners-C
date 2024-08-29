@@ -55,4 +55,14 @@ sub_t ind2sub(size_t rows, size_t columns, size_t idx);
  */
 void rd_ones(rd_mat_t ones_mat);
 
+/**
+ * @brief Implementation of matlab linspace using double
+ * 
+ * @param start 
+ * @param end 
+ * @param n 
+ * @param mat_addr matrix we fill
+ */
+void rd_linspace(double start, double end, size_t n, rd_mat_t mat_addr);
+
 #endif
