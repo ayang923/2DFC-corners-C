@@ -1,7 +1,7 @@
 #ifndef __NUM_LINALG_LIB__
 #define __NUM_LINALG_LIB__
 
-#include <cblas.h>
+#include <mkl.h>
 #include <stdlib.h>
 
 /**
@@ -13,8 +13,8 @@
  */
 typedef struct rd_mat {
     double *mat_data;
-    size_t rows;
-    size_t columns;
+    MKL_INT rows;
+    MKL_INT columns;
 } rd_mat_t;
 
 /**
@@ -24,8 +24,8 @@ typedef struct rd_mat {
  * @param j: column number
  */
 typedef struct sub {
-    size_t i;
-    size_t j;
+    MKL_INT i;
+    MKL_INT j;
 } sub_t;
 
 /**
@@ -34,9 +34,9 @@ typedef struct sub {
  * @param rows: # rows in matrix
  * @param columns: # col in matrix
  * @param sub: subscript
- * @return size_t: index
+ * @return MKL_INT: index
  */
-size_t sub2ind(size_t rows, size_t columns, sub_t sub);
+MKL_INT sub2ind(MKL_INT rows, MKL_INT columns, sub_t sub);
 
 /**
  * @brief Converts subscript to index
@@ -46,14 +46,7 @@ size_t sub2ind(size_t rows, size_t columns, sub_t sub);
  * @param idx: index
  * @return sub_t: subscript
  */
-sub_t ind2sub(size_t rows, size_t columns, size_t idx);
-
-/**
- * @brief Creates vector of all ones
- * 
- * @param ones_vector matrix address to store
- */
-void rd_ones(rd_mat_t ones_mat);
+sub_t ind2sub(MKL_INT rows, MKL_INT columns, MKL_INT idx);
 
 /**
  * @brief Implementation of matlab linspace using double
@@ -63,6 +56,6 @@ void rd_ones(rd_mat_t ones_mat);
  * @param n 
  * @param mat_addr matrix we fill
  */
-void rd_linspace(double start, double end, size_t n, rd_mat_t mat_addr);
+void rd_linspace(double start, double end, MKL_INT n, rd_mat_t mat_addr);
 
 #endif

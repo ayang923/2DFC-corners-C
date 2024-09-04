@@ -1,7 +1,5 @@
-ACCELERATE_LIB = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/Headers
-
-CC = clang
-CFLAGS = -Wall -Wextra -Iinclude/ -I$(ACCELERATE_LIB)
+CC = icx
+CFLAGS = -Wall -Wextra -Iinclude/   -qmkl=sequential
 
 TARGETS = main
 LIBS = q_patch_lib num_linalg_lib
@@ -19,10 +17,10 @@ find bin/ ! -name .gitignore -type f -delete
 all: $(BINS)
 
 $(BINS): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) -framework Accelerate
+	$(CC) $(CFLAGS) -o $@ $(OBJS)
 
 out/%.o: src/%.c
-	$(CC) $(CFLAGS) -c $^ -o $@ -framework Accelerate
+	$(CC) $(CFLAGS) -c $^ -o $@
 
 clean:
 	$(CLEAN_COMMAND)

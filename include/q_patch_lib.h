@@ -57,8 +57,8 @@ typedef struct q_patch {
     M_p_t M_p;
     J_t J;
 
-    size_t n_xi;
-    size_t n_eta;
+    MKL_INT n_xi;
+    MKL_INT n_eta;
     double xi_start;
     double xi_end;
     double eta_start;
@@ -89,7 +89,7 @@ typedef struct q_patch {
  * @param f_XY 
  * @param phi 
  */
-void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, size_t n_xi, size_t n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t f_XY, phi_param_t phi_param);
+void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t f_XY, phi_param_t phi_param);
 
 /**
  * @brief wrapper function for evaluating M_p
