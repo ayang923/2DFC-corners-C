@@ -23,4 +23,21 @@ void rd_linspace(double start, double end, MKL_INT n, rd_mat_t mat_addr) {
     }
 }
 
+void rd_meshgrid(rd_mat_t x, rd_mat_t y, rd_mat_t *X, rd_mat_t *Y) {
+    // assumes x and y are column vectors
+
+    X->rows = y.rows;
+    X->columns = x.rows;
+    Y->rows = y.rows;
+    Y->columns = x.rows;
+
+    for (int i = 0; i < y.rows; i++) {
+        for (int j = 0; j < x.rows; j++) {
+            MKL_INT idx = sub2ind(y.rows, x.rows, (sub_t) {i, j});
+            X->mat_data[idx] = x.mat_data[j];
+            Y->mat_data[idx] = y.mat_data[i];
+        }
+    }
+}
+
 

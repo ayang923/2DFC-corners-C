@@ -13,7 +13,15 @@
  * @param y: address of where to store y values
  * @param extra_param: allows us to put in a struct if needed for extra parameters
  */
-typedef void (*M_p_t) (rd_mat_t xi, rd_mat_t eta, rd_mat_t x, rd_mat_t y, void* extra_param);
+typedef void (*M_p_handle_t) (rd_mat_t xi, rd_mat_t eta, rd_mat_t x, rd_mat_t y, void* extra_param);
+
+/**
+ * @brief Info required to evaluate M_p type function
+ */
+typedef struct M_p {
+    M_p_handle_t M_p_handle;
+    void* extra_param;
+} M_p_t;
 
 /**
  * @brief phi handle type

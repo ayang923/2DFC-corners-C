@@ -27,7 +27,7 @@ void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, doubl
 }
 
 void evaulate_M_p(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, rd_mat_t x, rd_mat_t y) {
-    q_patch->M_p(xi, eta, x, y, NULL);
+    q_patch->M_p.M_p_handle(xi, eta, x, y, q_patch->M_p.extra_param);
 }
 void evaulate_J(q_patch_t *q_patch, rd_mat_t v, rd_mat_t J_vals) {
     q_patch->J(v, J_vals, NULL);

@@ -58,4 +58,5 @@ sub_t ind2sub(MKL_INT rows, MKL_INT columns, MKL_INT idx);
  */
 void rd_linspace(double start, double end, MKL_INT n, rd_mat_t mat_addr);
 
+void rd_meshgrid(rd_mat_t x, rd_mat_t y, rd_mat_t *X, rd_mat_t *Y);
 #endif
