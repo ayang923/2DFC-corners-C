@@ -13,7 +13,7 @@
  * @param y: address of where to store y values
  * @param extra_param: allows us to put in a struct if needed for extra parameters
  */
-typedef void (*M_p_handle_t) (rd_mat_t xi, rd_mat_t eta, rd_mat_t x, rd_mat_t y, void* extra_param);
+typedef void (*M_p_handle_t) (rd_mat_t xi, rd_mat_t eta, rd_mat_t *x, rd_mat_t *y, void* extra_param);
 
 /**
  * @brief Info required to evaluate M_p type function
@@ -24,6 +24,20 @@ typedef struct M_p {
 } M_p_t;
 
 /**
+ * @brief Jacobian handle type
+ * 
+ * @param v: 2 element vector containing xi and eta value
+ * @param J_vals: address of where to store J_vals
+ * @param extra_param: allows us to put in a struct if needed for extra parameters
+ */
+typedef void (*J_handle_t) (rd_mat_t v, rd_mat_t *J_vals, void* extra_param);
+
+typedef struct J {
+    J_handle_t J_handle;
+    void* extra_param;
+} J_t;
+
+/**
  * @brief phi handle type
  * 
  * @param xi: vector of xi values
@@ -31,7 +45,7 @@ typedef struct M_p {
  * @param phi_vals: address of where to store phi values
  * @param extra_param: allows us to put in a struct if needed for extra parameters
  */
-typedef void (*phi_t) (rd_mat_t xi, rd_mat_t eta, rd_mat_t phi_vals, void* extra_param);
+typedef void (*phi_handle_t) (rd_mat_t xi, rd_mat_t eta, rd_mat_t *phi_vals, void* extra_param);
 
 /**
  * @brief phi_1D handle type
@@ -39,23 +53,7 @@ typedef void (*phi_t) (rd_mat_t xi, rd_mat_t eta, rd_mat_t phi_vals, void* extra
  * @param x: vector of 1D input
  * @param phi_1D_vals: address of where to store output
  */
-typedef void (*phi_1D_t) (rd_mat_t x, rd_mat_t phi_1D_vals);
-
-/**
- * @brief Jacobian handle type
- * 
- * @param v: 2 element vector containing xi and eta value
- * @param J_vals: address of where to store J_vals
- * @param extra_param: allows us to put in a struct if needed for extra parameters
- */
-typedef void (*J_t) (rd_mat_t v, rd_mat_t J_vals, void* extra_param);
-
-typedef struct phi_param {
-    double R_xi;
-    double R_eta;
-    double xi_0;
-    double eta_0;
-} phi_param_t;
+typedef void (*phi_1D_t) (rd_mat_t x, rd_mat_t *phi_1D_vals);
 
 /**
  * @brief q_patch type struct
@@ -72,9 +70,9 @@ typedef struct q_patch {
     double eta_start;
     double eta_end;
 
-    rd_mat_t f_XY;
+    rd_mat_t *f_XY;
     phi_1D_t phi_1D;
-    phi_param_t phi_param;
+    void* phi_param;
 
     double eps_xi_eta;
     double eps_xy;
@@ -97,13 +95,15 @@ typedef struct q_patch {
  * @param f_XY 
  * @param phi 
  */
-void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t f_XY, phi_param_t phi_param);
+q_patch_t q_patch_init(M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t *f_XY, void* phi_param);
+
+MKL_INT q_patch_grid_num_el(q_patch_t *q_patch);
 
 /**
  * @brief wrapper function for evaluating M_p
  * 
  */
-void evaulate_M_p(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, rd_mat_t x, rd_mat_t y);
+void q_patch_evaulate_M_p(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, rd_mat_t *x, rd_mat_t *y);
 
 /**
  * @brief wrapper function for evaluating J
@@ -112,7 +112,13 @@ void evaulate_M_p(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, rd_mat_t x, rd_
  * @param v 
  * @param J_vals 
  */
-void evaulate_J(q_patch_t *q_patch, rd_mat_t v, rd_mat_t J_vals);
+void q_patch_evaulate_J(q_patch_t *q_patch, rd_mat_t v, rd_mat_t *J_vals);
+
+void q_patch_xi_mesh(q_patch_t *q_patch, rd_mat_t *xi_mesh_vals);
+
+void q_patch_eta_mesh(q_patch_t *q_patch, rd_mat_t *eta_mesh_vals);
+
+void q_patch_xi_eta_mesh(q_patch_t *q_patch, rd_mat_t *XI_vals, rd_mat_t *ETA_vals);
 
 phi_1D_t return_phi_1D(void);
 
