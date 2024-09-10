@@ -65,6 +65,13 @@ void rd_meshgrid(rd_mat_t x, rd_mat_t y, rd_mat_t *X, rd_mat_t *Y);
  */
 rd_mat_t rd_mat_init(double *mat_data_addr, MKL_INT rows, MKL_INT columns);
 
+/**
+ * @brief Wrapper function to create rd_mat_t object for rows and columns later
+ */
+rd_mat_t rd_mat_init_no_shape(double *mat_data_addr);
+
+void rd_mat_shape(rd_mat_t *mat, MKL_INT rows, MKL_INT columns);
+
 void print_matrix(rd_mat_t mat);
 
 #endif

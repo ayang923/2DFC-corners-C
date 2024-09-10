@@ -45,6 +45,15 @@ rd_mat_t rd_mat_init(double *mat_data_addr, MKL_INT rows, MKL_INT columns) {
     return (rd_mat_t) {mat_data_addr, rows, columns};
 }
 
+rd_mat_t rd_mat_init_no_shape(double *mat_data_addr) {
+    return rd_mat_init(mat_data_addr, 0, 0);
+}
+
+void rd_mat_shape(rd_mat_t *mat, MKL_INT rows, MKL_INT columns) {
+    mat->rows = rows;
+    mat->columns = columns;
+}
+
 void print_matrix(rd_mat_t mat) {
     for (MKL_INT i = 0; i < mat.rows; i++) {
         for (MKL_INT j = 0; j < mat.columns; j++) {

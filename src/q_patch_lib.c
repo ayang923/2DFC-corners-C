@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <mkl.h>
 #include <math.h>
+#include <stdio.h>
 
 #include "q_patch_lib.h"
 #include "num_linalg_lib.h"
@@ -35,6 +36,9 @@ MKL_INT q_patch_grid_num_el(q_patch_t *q_patch) {
 }
 
 void q_patch_evaulate_M_p(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, rd_mat_t *x, rd_mat_t *y) {
+    rd_mat_shape(x, xi.rows, xi.columns);
+    rd_mat_shape(y, xi.rows, xi.columns);
+
     q_patch->M_p.M_p_handle(xi, eta, x, y, q_patch->M_p.extra_param);
 }
 void q_patch_evaulate_J(q_patch_t *q_patch, rd_mat_t v, rd_mat_t *J_vals) {
@@ -42,23 +46,39 @@ void q_patch_evaulate_J(q_patch_t *q_patch, rd_mat_t v, rd_mat_t *J_vals) {
 }
 
 void q_patch_xi_mesh(q_patch_t *q_patch, rd_mat_t *xi_mesh_vals) {
+    rd_mat_shape(xi_mesh_vals, q_patch->n_xi+1, 1);
     rd_linspace(q_patch->xi_start, q_patch->xi_end, q_patch->n_xi+1, xi_mesh_vals);
 }
 
 void q_patch_eta_mesh(q_patch_t *q_patch, rd_mat_t *eta_mesh_vals) {
+    rd_mat_shape(eta_mesh_vals, q_patch->n_eta+1, 1);
     rd_linspace(q_patch->eta_start, q_patch->eta_end, q_patch->n_eta+1, eta_mesh_vals);
 }
 
 void q_patch_xi_eta_mesh(q_patch_t *q_patch, rd_mat_t *XI_vals, rd_mat_t *ETA_vals) {
     double xi_mesh_data[q_patch->n_xi+1];
-    rd_mat_t xi_mesh = rd_mat_init(xi_mesh_data, q_patch->n_xi+1, 1);
+    rd_mat_t xi_mesh = rd_mat_init_no_shape(xi_mesh_data);
     q_patch_xi_mesh(q_patch, &xi_mesh);
 
     double eta_mesh_data[q_patch->n_eta+1];
-    rd_mat_t eta_mesh = rd_mat_init(eta_mesh_data, q_patch->n_eta+1, 1);
+    rd_mat_t eta_mesh = rd_mat_init_no_shape(eta_mesh_data);
     q_patch_eta_mesh(q_patch, &eta_mesh);
 
     rd_meshgrid(xi_mesh, eta_mesh, XI_vals, ETA_vals);
+}
+
+void q_patch_convert_to_XY(q_patch_t *q_patch, rd_mat_t XI, rd_mat_t ETA, rd_mat_t *X_vals, rd_mat_t *Y_vals) {
+    q_patch_evaulate_M_p(q_patch, XI, ETA, X_vals, Y_vals);
+}
+
+void q_patch_xy_mesh(q_patch_t *q_patch, rd_mat_t *X_vals, rd_mat_t *Y_vals) {
+    double XI_data[q_patch_grid_num_el(q_patch)];
+    double ETA_data[q_patch_grid_num_el(q_patch)];
+    rd_mat_t XI = rd_mat_init_no_shape(XI_data);
+    rd_mat_t ETA = rd_mat_init_no_shape(ETA_data);
+
+    q_patch_xi_eta_mesh(q_patch, &XI, &ETA);
+    q_patch_convert_to_XY(q_patch, XI, ETA, X_vals, Y_vals);
 }
 
 phi_1D_t return_phi_1D(void) {

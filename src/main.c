@@ -16,18 +16,18 @@ typedef struct J_C2_extra_param {
     double theta_B;
 } J_C2_extra_param_t;
 
-void M_p_C2(rd_mat_t xi, rd_mat_t eta, rd_mat_t x, rd_mat_t y, void* extra_param) {
+void M_p_C2(rd_mat_t xi, rd_mat_t eta, rd_mat_t *x, rd_mat_t *y, void* extra_param) {
     M_p_C2_extra_param_t* C2_extra_param = (M_p_C2_extra_param_t*) extra_param;
 
-    // assumes xi and eta are column vectors of same side, using for loopos for ease of implementation
-    for (MKL_INT i = 0; i < xi.rows; i++) {
+    // assumes xi and eta are of same size, using for loopos for ease of implementation
+    for (MKL_INT i = 0; i < xi.rows*xi.columns; i++) {
         double l_A = xi.mat_data[i]*(C2_extra_param->theta_A - C2_extra_param->theta_C) + C2_extra_param->theta_C;
         double l_B = eta.mat_data[i]*(C2_extra_param->theta_B - C2_extra_param->theta_C - 2*M_PI) + C2_extra_param->theta_C + 2*M_PI;
 
         // printf("(%f, %f)\n", l_A, l_B);
 
-        x.mat_data[i] = 2*sin(l_A/2) + 2*sin(l_B/2) - 2*sin(C2_extra_param->theta_C/2);
-        y.mat_data[i] = -sin(l_A) - sin(l_B) - sin(C2_extra_param->theta_C);
+        x->mat_data[i] = 2*sin(l_A/2) + 2*sin(l_B/2) - 2*sin(C2_extra_param->theta_C/2);
+        y->mat_data[i] = -sin(l_A) - sin(l_B) - sin(C2_extra_param->theta_C);
     }
 }
 
@@ -60,14 +60,20 @@ int main() {
 
     q_patch_t C2_patch_test = q_patch_init(C2_M_p, C2_J, 1e-13, 1e-13, n_xi, n_eta, 0.0, 1.0, 0.0, 1.0, &f_XY, NULL);
     
-
     double XI_data[q_patch_grid_num_el(&C2_patch_test)];
     double ETA_data[q_patch_grid_num_el(&C2_patch_test)];
-    rd_mat_t XI = rd_mat_init(XI_data, C2_patch_test.n_eta, C2_patch_test.n_xi);
-    rd_mat_t ETA = rd_mat_init(ETA_data, C2_patch_test.n_eta, C2_patch_test.n_xi);
+    rd_mat_t XI = rd_mat_init_no_shape(XI_data);
+    rd_mat_t ETA = rd_mat_init_no_shape(ETA_data);
+
+    double X_data[q_patch_grid_num_el(&C2_patch_test)];
+    double Y_data[q_patch_grid_num_el(&C2_patch_test)];
+    rd_mat_t X = rd_mat_init_no_shape(X_data);
+    rd_mat_t Y = rd_mat_init_no_shape(Y_data);
 
     q_patch_xi_eta_mesh(&C2_patch_test, &XI, &ETA);
-    // print_matrix(XI);
-    print_matrix(ETA);
+
+    q_patch_xy_mesh(&C2_patch_test, &X, &Y);
+
+    print_matrix(X);
     return 0;
 }

@@ -120,6 +120,10 @@ void q_patch_eta_mesh(q_patch_t *q_patch, rd_mat_t *eta_mesh_vals);
 
 void q_patch_xi_eta_mesh(q_patch_t *q_patch, rd_mat_t *XI_vals, rd_mat_t *ETA_vals);
 
+void q_patch_convert_to_XY(q_patch_t *q_patch, rd_mat_t XI, rd_mat_t ETA, rd_mat_t *X_vals, rd_mat_t *Y_vals);
+
+void q_patch_xy_mesh(q_patch_t *q_patch, rd_mat_t *X_vals, rd_mat_t *Y_vals);
+
 phi_1D_t return_phi_1D(void);
 
 #endif
