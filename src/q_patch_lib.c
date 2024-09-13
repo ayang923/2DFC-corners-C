@@ -81,6 +81,94 @@ void q_patch_xy_mesh(q_patch_t *q_patch, rd_mat_t *X_vals, rd_mat_t *Y_vals) {
     q_patch_convert_to_XY(q_patch, XI, ETA, X_vals, Y_vals);
 }
 
+inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, double y, rd_mat_t* initial_guesses_xi, rd_mat_t* initial_guesses_eta) {
+    rd_mat_t initial_guesses_xi_mat;
+    rd_mat_t initial_guesses_eta_mat;
+    if (initial_guesses_xi == NULL || initial_guesses_eta == NULL) {
+        int N = 20;
+        int N_segment = ceil(N/4);
+
+        double initial_guesses_xi_data[N_segment*4];
+        double initial_guesses_eta_data[N_segment*4];
+
+        double xi_mesh_data[N_segment+1];
+        double eta_mesh_data[N_segment+1];
+        rd_mat_t xi_mesh = rd_mat_init(xi_mesh_data, N_segment+1, 1);
+        rd_mat_t eta_mesh = rd_mat_init(eta_mesh_data, N_segment+1, 1);
+
+        rd_linspace(q_patch->xi_start, q_patch->xi_end, N_segment+1, &xi_mesh);
+        rd_linspace(q_patch->eta_start, q_patch->eta_end, N_segment+1, &eta_mesh);
+        
+        cblas_dcopy(N_segment, xi_mesh_data, 1, initial_guesses_xi_data, 1);
+        cblas_dcopy(N_segment, xi_mesh_data, 1, initial_guesses_xi_data+N_segment, 1);
+        cblas_dcopy(N_segment, &(q_patch->xi_start), 0, initial_guesses_xi_data+2*N_segment, 1);
+        cblas_dcopy(N_segment, &(q_patch->xi_end), 0, initial_guesses_xi_data+3*N_segment, 1);
+
+        initial_guesses_xi_mat = rd_mat_init(initial_guesses_xi_data, N_segment*4, 1);
+
+        cblas_dcopy(N_segment, &(q_patch->eta_start), 0, initial_guesses_eta_data, 1);
+        cblas_dcopy(N_segment, &(q_patch->eta_end), 0, initial_guesses_eta_data+N_segment, 1);
+        cblas_dcopy(N_segment, eta_mesh_data, 1, initial_guesses_eta_data+2*N_segment, 1);
+        cblas_dcopy(N_segment, eta_mesh_data, 1, initial_guesses_eta_data+3*N_segment, 1);
+
+        initial_guesses_eta_mat = rd_mat_init(initial_guesses_eta_data, N_segment*4, 1);
+
+        initial_guesses_xi = &initial_guesses_xi_mat;
+        initial_guesses_eta = &initial_guesses_eta_mat;
+    }
+
+    //preallocation for newton's method
+    double J_data[4];
+    rd_mat_t J_addr = rd_mat_init(J_data, 2, 2);
+    double v_prev_data[2];
+    rd_mat_t v_prev = rd_mat_init(v_prev_data, 2, 1);
+    double v_data[2];
+    rd_mat_t v = rd_mat_init(v_data, 2, 1);
+
+    double f_v_data[4];
+    rd_mat_t M_p_v_x = rd_mat_init(f_v_data, 1, 1);
+    rd_mat_t M_p_v_y = rd_mat_init(f_v_data+1, 1, 1);
+
+    double v_diff_data[2];
+    int ipiv[2];
+    double xy_exact_data[2] = {x, y};
+
+    int converged = 0;
+
+    for (MKL_INT k = 0; k < initial_guesses_xi->columns; k++) {
+        v.mat_data[0] = initial_guesses_xi->mat_data[k];
+        v.mat_data[1] = initial_guesses_eta->mat_data[k];
+
+        //newton solve with max iterations 100 and error tolerance given by q_patch
+        for (MKL_INT i = 0; i < 100; i++) {
+            // evaluates difference between solutions in real space
+            q_patch_evaulate_M_p(q_patch, rd_mat_init(v.mat_data, 1, 1), rd_mat_init(v.mat_data+1, 1, 1), &M_p_v_x, &M_p_v_y);
+            vdSub(2, f_v_data, xy_exact_data, f_v_data);
+            
+            // convergence threshold
+            vdSub(2, v_data, v_prev_data, v_diff_data);
+            if (fabs(f_v_data[cblas_idamax(2, f_v_data, 1)]) < q_patch->eps_xy && cblas_dnrm2(2, v_diff_data, 1) < q_patch->eps_xy) {
+                converged = 1;
+                break;
+            }
+
+            v_prev.mat_data[0] = v.mat_data[0];
+            v_prev.mat_data[1] = v.mat_data[1];
+
+            //update step
+            q_patch_evaulate_J(q_patch, v, &J_addr);
+            LAPACKE_dgesv(LAPACK_COL_MAJOR, 2, 1, J_addr.mat_data, 2, ipiv, f_v_data, 2);
+            vdSub(2, v_data, f_v_data, v_data);
+        }
+
+        if (converged) {
+            return (inverse_M_p_return_type_t) {v_data[0], v_data[1], converged};
+        }
+    }
+
+    return (inverse_M_p_return_type_t) {0, 0, converged};
+}
+
 phi_1D_t return_phi_1D(void) {
     return (phi_1D_t) phi_1D;
 }

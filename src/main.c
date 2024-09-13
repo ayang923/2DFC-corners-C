@@ -74,6 +74,7 @@ int main() {
 
     q_patch_xy_mesh(&C2_patch_test, &X, &Y);
 
-    print_matrix(X);
+    inverse_M_p_return_type_t inverse_return = q_patch_inverse_M_p(&C2_patch_test, 0.6, 0.4, NULL, NULL);
+    printf("%f, %f, %d\n", inverse_return.xi, inverse_return.eta, inverse_return.converged);
     return 0;
 }

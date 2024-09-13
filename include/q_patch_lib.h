@@ -124,6 +124,14 @@ void q_patch_convert_to_XY(q_patch_t *q_patch, rd_mat_t XI, rd_mat_t ETA, rd_mat
 
 void q_patch_xy_mesh(q_patch_t *q_patch, rd_mat_t *X_vals, rd_mat_t *Y_vals);
 
+typedef struct inverse_M_p_return_type {
+    double xi;
+    double eta;
+    int converged;
+} inverse_M_p_return_type_t;
+
+inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, double y, rd_mat_t* initial_guesses_xi, rd_mat_t* initial_guesses_eta);
+
 phi_1D_t return_phi_1D(void);
 
 #endif
