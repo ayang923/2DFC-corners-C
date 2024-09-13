@@ -49,7 +49,20 @@ rd_mat_t rd_mat_init_no_shape(double *mat_data_addr) {
     return rd_mat_init(mat_data_addr, 0, 0);
 }
 
+ri_mat_t ri_mat_init(int *mat_data_addr, MKL_INT rows, MKL_INT columns) {
+    return (ri_mat_t) {mat_data_addr, rows, columns};
+}
+
+ri_mat_t ri_mat_init_no_shape(int *mat_data_addr) {
+    return ri_mat_init(mat_data_addr, 0, 0);
+}
+
 void rd_mat_shape(rd_mat_t *mat, MKL_INT rows, MKL_INT columns) {
+    mat->rows = rows;
+    mat->columns = columns;
+}
+
+void ri_mat_shape(ri_mat_t *mat, MKL_INT rows, MKL_INT columns) {
     mat->rows = rows;
     mat->columns = columns;
 }
