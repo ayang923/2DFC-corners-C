@@ -81,6 +81,35 @@ void q_patch_xy_mesh(q_patch_t *q_patch, rd_mat_t *X_vals, rd_mat_t *Y_vals) {
     q_patch_convert_to_XY(q_patch, XI, ETA, X_vals, Y_vals);
 }
 
+void q_patch_in_patch(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, ri_mat_t *in_patch_msk) {
+    // assumes xi and eta have save shape
+    ri_mat_shape(in_patch_msk, xi.rows, xi.columns);
+
+    for (MKL_INT i = 0; i < xi.rows*xi.columns; i++) {
+        in_patch_msk->mat_data[i] = xi.mat_data[i] >= q_patch->xi_start && xi.mat_data[i] <= q_patch->xi_end && eta.mat_data[i] >= q_patch->eta_start && eta.mat_data[i] <= q_patch->eta_end;
+    }
+}
+
+void q_patch_round_boundary_points(q_patch_t *q_patch, rd_mat_t *xi, rd_mat_t *eta) {
+    // assumes xi and eta have same shape
+    for(MKL_INT i = 0; i < xi->rows*eta->columns; i++) {
+        if (fabs(xi->mat_data[i]-q_patch->xi_start) < q_patch->eps_xi_eta) {
+            printf("Rounding xi\n");
+            xi->mat_data[i] = q_patch->xi_start;
+        }
+        else if (fabs(xi->mat_data[i]-q_patch->xi_end) < q_patch->eps_xi_eta) {
+            xi->mat_data[i] = q_patch->xi_end;
+        }
+        if (fabs(eta->mat_data[i]-q_patch->eta_start) < q_patch->eps_xi_eta) {
+            printf("Rounding eta\n");
+            eta->mat_data[i] = q_patch->eta_start;
+        }
+        else if (fabs(eta->mat_data[i]-q_patch->eta_end) < q_patch->eps_xi_eta) {
+            eta->mat_data[i] = q_patch->eta_end;
+        }
+    }
+}
+
 inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, double y, rd_mat_t* initial_guesses_xi, rd_mat_t* initial_guesses_eta) {
     rd_mat_t initial_guesses_xi_mat;
     rd_mat_t initial_guesses_eta_mat;
@@ -124,6 +153,8 @@ inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, doub
     rd_mat_t v_prev = rd_mat_init(v_prev_data, 2, 1);
     double v_data[2];
     rd_mat_t v = rd_mat_init(v_data, 2, 1);
+    rd_mat_t xi_scalar = rd_mat_init(v_data, 1, 1);
+    rd_mat_t eta_scalar = rd_mat_init(v_data+1, 1, 1);
 
     double f_v_data[4];
     rd_mat_t M_p_v_x = rd_mat_init(f_v_data, 1, 1);
@@ -132,6 +163,9 @@ inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, doub
     double v_diff_data[2];
     int ipiv[2];
     double xy_exact_data[2] = {x, y};
+
+    int in_patch;
+    ri_mat_t in_patch_scalar = ri_mat_init(&in_patch, 1, 1);
 
     int converged = 0;
 
@@ -160,13 +194,15 @@ inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, doub
             LAPACKE_dgesv(LAPACK_COL_MAJOR, 2, 1, J_addr.mat_data, 2, ipiv, f_v_data, 2);
             vdSub(2, v_data, f_v_data, v_data);
         }
-
-        if (converged) {
+        
+        q_patch_round_boundary_points(q_patch, &xi_scalar, &eta_scalar);
+        q_patch_in_patch(q_patch, xi_scalar, eta_scalar, &in_patch_scalar);
+        if (converged && in_patch) {
             return (inverse_M_p_return_type_t) {v_data[0], v_data[1], converged};
         }
     }
 
-    return (inverse_M_p_return_type_t) {0, 0, converged};
+    return (inverse_M_p_return_type_t) {v_data[0], v_data[1], converged};
 }
 
 phi_1D_t return_phi_1D(void) {
