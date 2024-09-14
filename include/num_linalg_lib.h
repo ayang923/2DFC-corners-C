@@ -21,7 +21,7 @@ typedef struct ri_mat {
     int *mat_data;
     MKL_INT rows;
     MKL_INT columns;
-}
+} ri_mat_t;
 
 /**
  * @brief subscript struct
@@ -76,9 +76,9 @@ rd_mat_t rd_mat_init(double *mat_data_addr, MKL_INT rows, MKL_INT columns);
  */
 rd_mat_t rd_mat_init_no_shape(double *mat_data_addr);
 
-rd_mat_t ri_mat_init(int *mat_data_addr, MKL_INT rows, MKL_INT columns);
+ri_mat_t ri_mat_init(int *mat_data_addr, MKL_INT rows, MKL_INT columns);
 
-rd_mat_t ri_mat_init_no_shape(int *mat_data_addr);
+ri_mat_t ri_mat_init_no_shape(int *mat_data_addr);
 
 void rd_mat_shape(rd_mat_t *mat, MKL_INT rows, MKL_INT columns);
 
