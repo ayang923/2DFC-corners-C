@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <mkl.h>
 #include <assert.h>
+#include <float.h>
+#include <math.h>
 
 #include "num_linalg_lib.h"
 
@@ -65,6 +67,59 @@ void rd_mat_shape(rd_mat_t *mat, MKL_INT rows, MKL_INT columns) {
 void ri_mat_shape(ri_mat_t *mat, MKL_INT rows, MKL_INT columns) {
     mat->rows = rows;
     mat->columns = columns;
+}
+
+void ri_range(int start, int step_size, int end, ri_mat_t *mat_addr) {
+    assert(mat_addr->rows == (end-start)/step_size+1);
+    for (MKL_INT i = 0; i < mat_addr->rows; i++) {
+        mat_addr->mat_data[i] = start + step_size*i;
+    }
+}
+
+void ri_print_matrix(ri_mat_t mat) {
+    for (MKL_INT i = 0; i < mat.rows; i++) {
+        for (MKL_INT j = 0; j < mat.columns; j++) {
+            MKL_INT idx = sub2ind(mat.rows, mat.columns, (sub_t) {i, j});
+            printf("%d ", mat.mat_data[idx]);
+        }
+        printf("\n");
+    }
+}
+
+double barylag(rd_mat_t ix, rd_mat_t iy, double x) {
+    // assumes ix and iy are column vectors
+
+    //computing weights
+    MKL_INT n = ix.rows;
+    double w[n];
+    w[0] = 1;
+
+    for (MKL_INT j = 1; j < n; j++) {
+        w[j] = 1;
+        for (MKL_INT k = 0; k < j; k++) {
+            w[k] = (ix.mat_data[k]-ix.mat_data[j])*w[k];
+            w[j] = (ix.mat_data[j]-ix.mat_data[k])*w[j];
+        }
+    }
+    for (MKL_INT j = 0; j < n; j++) {
+        w[j] = 1/w[j];
+    }
+
+    double w_x_distance[n];
+    for (MKL_INT j = 0; j < n; j++) {
+        if (fabs(ix.mat_data[j]-x) < DBL_EPSILON) {
+            return iy.mat_data[j];
+        }
+        w_x_distance[j] = 1/(x-ix.mat_data[j]);
+    }
+    
+    vdMul(n, w, w_x_distance, w_x_distance);
+
+    double f_w_x_distance[n];
+    vdMul(n, w_x_distance, iy.mat_data, f_w_x_distance);
+
+    double one = 1;
+    return cblas_ddot(n, f_w_x_distance, 1, &one, 0) / cblas_ddot(n, w_x_distance, 1, &one, 0);
 }
 
 void print_matrix(rd_mat_t mat) {

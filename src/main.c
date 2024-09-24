@@ -46,6 +46,13 @@ void J_C2(rd_mat_t v, rd_mat_t *J_vals, void* extra_param) {
     J_vals->mat_data[3] = -(theta_B-2*M_PI)*cos(v.mat_data[1]*(theta_B-2*M_PI)+2*M_PI);
 }
 
+void f(rd_mat_t x, rd_mat_t y, rd_mat_t *f_xy) {
+    rd_mat_shape(f_xy, x.rows, x.columns);
+    for (MKL_INT i = 0; i < x.rows*x.columns; i++) {
+        f_xy->mat_data[i] = 4 + (1 + pow(x.mat_data[i], 2) + pow(y.mat_data[i], 2))*(sin(2.5*M_PI*x.mat_data[i] - 0.5) + cos(2*M_PI*y.mat_data[i] - 0.5));
+    }
+}
+
 int main() {
     M_p_C2_extra_param_t M_p_params = {0.4, 2*M_PI-0.4, 0};
     M_p_t C2_M_p = {(M_p_handle_t) M_p_C2, (void*) &M_p_params};
@@ -73,6 +80,8 @@ int main() {
     q_patch_xi_eta_mesh(&C2_patch_test, &XI, &ETA);
 
     q_patch_xy_mesh(&C2_patch_test, &X, &Y);
+
+    f(X, Y, C2_patch_test.f_XY);
 
     inverse_M_p_return_type_t inverse_return = q_patch_inverse_M_p(&C2_patch_test, 0.6, 0.4, NULL, NULL);
     printf("%f, %f, %d\n", inverse_return.xi, inverse_return.eta, inverse_return.converged);

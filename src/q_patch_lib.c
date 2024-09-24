@@ -8,6 +8,15 @@
 
 void phi_1D(rd_mat_t x, rd_mat_t *phi_1D_vals);
 
+void shift_idx_mesh(ri_mat_t *mat, int min_bound, int max_bound) {
+    if (mat->mat_data[0] < min_bound) {
+        ri_range(min_bound, 1, min_bound+mat->rows-1, mat);
+    }
+    if (mat->mat_data[mat->rows-1] > max_bound) {
+        ri_range(max_bound-mat->rows+1, 1, max_bound, mat);
+    }
+}
+
 q_patch_t q_patch_init(M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t *f_XY, void* phi_param) {
     q_patch_t q_patch;
 
@@ -22,6 +31,9 @@ q_patch_t q_patch_init(M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, MKL_I
     q_patch.xi_end = xi_end;
     q_patch.eta_start = eta_start;
     q_patch.eta_end = eta_end;
+
+    q_patch.h_xi = (xi_end-xi_start)/n_xi;
+    q_patch.h_eta = (eta_end-eta_start)/n_eta;
 
     q_patch.f_XY = f_XY;
 
@@ -203,6 +215,69 @@ inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, doub
     }
 
     return (inverse_M_p_return_type_t) {v_data[0], v_data[1], converged};
+}
+
+locally_compute_return_type_t q_patch_locally_compute(q_patch_t *q_patch, double xi, double eta, int M) {
+    int in_patch;
+    rd_mat_t xi_scalar = rd_mat_init(&xi, 1, 1);
+    rd_mat_t eta_scalar = rd_mat_init(&eta, 1, 1);
+    ri_mat_t in_patch_scalar = ri_mat_init(&in_patch, 1, 1);
+    q_patch_in_patch(q_patch, xi_scalar, eta_scalar, &in_patch_scalar);
+
+    if (!in_patch) {
+        return (locally_compute_return_type_t) {NAN, 0};
+    }
+
+    int xi_j = (int) ((xi-q_patch->xi_start)/q_patch->h_xi);
+    int eta_j = (int) ((eta-q_patch->eta_start)/q_patch->h_eta);
+
+    int half_M = M/2;
+
+    int interpol_xi_j_mesh_data[M];
+    int interpol_eta_j_mesh_data[M];
+    ri_mat_t interpol_xi_j_mesh = ri_mat_init(interpol_xi_j_mesh_data, M, 1);
+    ri_mat_t interpol_eta_j_mesh = ri_mat_init(interpol_eta_j_mesh_data, M, 1);
+
+    if (M%2) {
+        ri_range(xi_j-half_M, 1, xi_j+half_M, &interpol_xi_j_mesh);
+        ri_range(eta_j-half_M, 1, eta_j+half_M, &interpol_eta_j_mesh);
+    }
+    else {
+        ri_range(xi_j-half_M+1, 1, xi_j+half_M, &interpol_xi_j_mesh);
+        ri_range(eta_j-half_M+1, 1, eta_j+half_M, &interpol_eta_j_mesh);
+    }
+
+    shift_idx_mesh(&interpol_xi_j_mesh, 0, q_patch->n_xi);
+    shift_idx_mesh(&interpol_eta_j_mesh, 0, q_patch->n_eta);
+
+    double interpol_xi_mesh_data[M];
+    double interpol_eta_mesh_data[M];
+    rd_mat_t interpol_xi_mesh = rd_mat_init(interpol_xi_mesh_data, M, 1);
+    rd_mat_t interpol_eta_mesh = rd_mat_init(interpol_eta_mesh_data, M, 1);
+
+    // j*h+start
+    for (MKL_INT i = 0; i < M; i++) {
+        interpol_xi_mesh_data[i] = interpol_xi_j_mesh_data[i]*q_patch->h_xi + q_patch->xi_start;
+        interpol_eta_mesh_data[i] = interpol_eta_j_mesh_data[i]*q_patch->h_eta + q_patch->eta_start;
+    }
+
+    double interpol_xi_exact_data[M];
+    rd_mat_t interpol_xi_exact = rd_mat_init(interpol_xi_exact_data, M, 1);
+
+    double interpol_val_data[M];
+    MKL_INT interpol_xi_idxs[M];
+
+    rd_mat_t interpol_val = rd_mat_init(interpol_val_data, M, 1);
+    for (MKL_INT horz_idx = 0; horz_idx < M; horz_idx++) {
+        for (MKL_INT i = 0; i < M; i++) {
+            interpol_xi_idxs[i] = sub2ind(q_patch->n_eta+1, q_patch->n_xi+1, (sub_t) {interpol_eta_j_mesh_data[horz_idx], interpol_xi_j_mesh_data[i]});
+        }
+        vdPackV(M, q_patch->f_XY->mat_data, interpol_xi_idxs, interpol_val_data);
+        interpol_xi_exact_data[horz_idx] = barylag(interpol_xi_mesh, interpol_val, xi);
+    }
+
+    double f_xy = barylag(interpol_eta_mesh, interpol_xi_exact, eta);
+    return (locally_compute_return_type_t) {f_xy, 1};
 }
 
 phi_1D_t return_phi_1D(void) {

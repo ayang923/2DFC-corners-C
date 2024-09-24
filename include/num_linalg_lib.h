@@ -84,6 +84,12 @@ void rd_mat_shape(rd_mat_t *mat, MKL_INT rows, MKL_INT columns);
 
 void ri_mat_shape(ri_mat_t *mat, MKL_INT rows, MKL_INT columns);
 
+void ri_range(int start, int step_size, int end, ri_mat_t *mat_addr);
+
 void print_matrix(rd_mat_t mat);
+
+void ri_print_matrix(ri_mat_t mat);
+
+double barylag(rd_mat_t ix, rd_mat_t iy, double x);
 
 #endif

@@ -70,6 +70,9 @@ typedef struct q_patch {
     double eta_start;
     double eta_end;
 
+    double h_xi;
+    double h_eta;
+
     rd_mat_t *f_XY;
     phi_1D_t phi_1D;
     void* phi_param;
@@ -131,6 +134,13 @@ typedef struct inverse_M_p_return_type {
 } inverse_M_p_return_type_t;
 
 inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, double y, rd_mat_t* initial_guesses_xi, rd_mat_t* initial_guesses_eta);
+
+typedef struct locally_compute_return_type {
+    double f_xy;
+    int in_range;
+} locally_compute_return_type_t;
+
+locally_compute_return_type_t q_patch_locally_compute(q_patch_t *q_patch, double xi, double eta, int M);
 
 phi_1D_t return_phi_1D(void);
 
