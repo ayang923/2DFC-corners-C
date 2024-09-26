@@ -98,7 +98,7 @@ typedef struct q_patch {
  * @param f_XY 
  * @param phi 
  */
-q_patch_t q_patch_init(M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t *f_XY, void* phi_param);
+void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t *f_XY, void* phi_param);
 
 MKL_INT q_patch_grid_num_el(q_patch_t *q_patch);
 

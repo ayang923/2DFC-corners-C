@@ -65,7 +65,8 @@ int main() {
     double f_XY_data[(n_xi+1)*(n_eta+1)];
     rd_mat_t f_XY = rd_mat_init(f_XY_data, n_xi+1, n_eta+1);
 
-    q_patch_t C2_patch_test = q_patch_init(C2_M_p, C2_J, 1e-13, 1e-13, n_xi, n_eta, 0.0, 1.0, 0.0, 1.0, &f_XY, NULL);
+    q_patch_t C2_patch_test;
+    q_patch_init(&C2_patch_test, C2_M_p, C2_J, 1e-13, 1e-13, n_xi, n_eta, 0.0, 1.0, 0.0, 1.0, &f_XY, NULL);
     
     double XI_data[q_patch_grid_num_el(&C2_patch_test)];
     double ETA_data[q_patch_grid_num_el(&C2_patch_test)];

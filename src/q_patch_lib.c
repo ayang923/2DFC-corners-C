@@ -17,30 +17,26 @@ void shift_idx_mesh(ri_mat_t *mat, int min_bound, int max_bound) {
     }
 }
 
-q_patch_t q_patch_init(M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t *f_XY, void* phi_param) {
-    q_patch_t q_patch;
-
-    q_patch.M_p = M_p;
-    q_patch.J = J;
-    q_patch.eps_xi_eta = eps_xi_eta;
-    q_patch.eps_xy = eps_xy;
+void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t *f_XY, void* phi_param) {
+    q_patch->M_p = M_p;
+    q_patch->J = J;
+    q_patch->eps_xi_eta = eps_xi_eta;
+    q_patch->eps_xy = eps_xy;
     
-    q_patch.n_xi = n_xi;
-    q_patch.n_eta = n_eta;
-    q_patch.xi_start = xi_start;
-    q_patch.xi_end = xi_end;
-    q_patch.eta_start = eta_start;
-    q_patch.eta_end = eta_end;
+    q_patch->n_xi = n_xi;
+    q_patch->n_eta = n_eta;
+    q_patch->xi_start = xi_start;
+    q_patch->xi_end = xi_end;
+    q_patch->eta_start = eta_start;
+    q_patch->eta_end = eta_end;
 
-    q_patch.h_xi = (xi_end-xi_start)/n_xi;
-    q_patch.h_eta = (eta_end-eta_start)/n_eta;
+    q_patch->h_xi = (xi_end-xi_start)/n_xi;
+    q_patch->h_eta = (eta_end-eta_start)/n_eta;
 
-    q_patch.f_XY = f_XY;
+    q_patch->f_XY = f_XY;
 
-    q_patch.phi_1D = (phi_1D_t) phi_1D;
-    q_patch.phi_param = phi_param;
-
-    return q_patch;
+    q_patch->phi_1D = (phi_1D_t) phi_1D;
+    q_patch->phi_param = phi_param;
 }
 
 MKL_INT q_patch_grid_num_el(q_patch_t *q_patch) {
