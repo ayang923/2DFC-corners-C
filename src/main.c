@@ -4,6 +4,7 @@
 
 #include "q_patch_lib.h"
 #include "num_linalg_lib.h"
+#include "fc_lib.h"
 
 typedef struct M_p_C2_extra_param {
     double theta_A;
@@ -86,5 +87,14 @@ int main() {
 
     inverse_M_p_return_type_t inverse_return = q_patch_inverse_M_p(&C2_patch_test, 0.6, 0.4, NULL, NULL);
     printf("%f, %f, %d\n", inverse_return.xi, inverse_return.eta, inverse_return.converged);
+
+    //reading continuation matrices
+    double A_data[fc_A_numel(5, 27, 6)];
+    double Q_data[fc_Q_numel(5)];
+    rd_mat_t A = {A_data, 0, 0};
+    rd_mat_t Q = {Q_data, 0, 0};
+
+    read_fc_matrix(5, 27, 6, "fc_data/A_d5_C27.txt", "fc_data/Q_d5_C27.txt", &A, &Q);
+
     return 0;
 }

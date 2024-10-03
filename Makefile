@@ -2,7 +2,7 @@ CC = icx
 CFLAGS = -Wall -Wextra -Iinclude/   -qmkl=sequential
 
 TARGETS = main
-LIBS = q_patch_lib num_linalg_lib
+LIBS = q_patch_lib num_linalg_lib s_patch_lib fc_lib
 
 OBJS = $(addprefix out/,$(LIBS:=.o)) $(addprefix out/,$(TARGETS:=.o)) 
 BINS = $(addprefix bin/,$(TARGETS))
