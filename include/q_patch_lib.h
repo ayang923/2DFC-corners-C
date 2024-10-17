@@ -127,6 +127,10 @@ void q_patch_convert_to_XY(q_patch_t *q_patch, rd_mat_t XI, rd_mat_t ETA, rd_mat
 
 void q_patch_xy_mesh(q_patch_t *q_patch, rd_mat_t *X_vals, rd_mat_t *Y_vals);
 
+typedef void (*f_handle_t) (rd_mat_t x, rd_mat_t y, rd_mat_t *f_xy);
+
+void q_patch_evaluate_f(q_patch_t *q_patch, f_handle_t f);
+
 typedef struct inverse_M_p_return_type {
     double xi;
     double eta;

@@ -27,4 +27,10 @@ typedef struct s_patch {
 
 void s_patch_init(s_patch_t *s_patch, M_p_general_t M_p_general, J_general_t J_general, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t *f_XY, double h, void* phi_param);
 
+MKL_INT s_patch_FC_num_el(s_patch_t *s_patch, MKL_INT C, MKL_INT n_r);
+
+void s_patch_FC_init(s_patch_t *s_patch, MKL_INT C, MKL_INT n_r, rd_mat_t* f_FC, s_patch_t *s_patch_FC);
+
+void s_patch_FC(s_patch_t *s_patch, MKL_INT d, rd_mat_t A, rd_mat_t Q, rd_mat_t* phi_normalization, s_patch_t* s_patch_FC);
+
 #endif

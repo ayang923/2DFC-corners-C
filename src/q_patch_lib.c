@@ -89,6 +89,17 @@ void q_patch_xy_mesh(q_patch_t *q_patch, rd_mat_t *X_vals, rd_mat_t *Y_vals) {
     q_patch_convert_to_XY(q_patch, XI, ETA, X_vals, Y_vals);
 }
 
+void q_patch_evaluate_f(q_patch_t *q_patch, f_handle_t f) {
+    double X_data[q_patch_grid_num_el(q_patch)];
+    double Y_data[q_patch_grid_num_el(q_patch)];
+    rd_mat_t X = rd_mat_init_no_shape(X_data);
+    rd_mat_t Y = rd_mat_init_no_shape(Y_data);
+
+    q_patch_xy_mesh(q_patch, &X, &Y);
+
+    f(X, Y, q_patch->f_XY);
+}
+
 void q_patch_in_patch(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, ri_mat_t *in_patch_msk) {
     // assumes xi and eta have save shape
     ri_mat_shape(in_patch_msk, xi.rows, xi.columns);

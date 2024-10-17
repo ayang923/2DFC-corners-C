@@ -1,7 +1,7 @@
 CC = icx
-CFLAGS = -Wall -Wextra -Iinclude/   -qmkl=sequential
+CFLAGS = -Wall -Wextra -Iinclude/   -qmkl=sequential -fsanitize=address
 
-TARGETS = main
+TARGETS = smooth_2DFC_main
 LIBS = q_patch_lib num_linalg_lib s_patch_lib fc_lib
 
 OBJS = $(addprefix out/,$(LIBS:=.o)) $(addprefix out/,$(TARGETS:=.o)) 
