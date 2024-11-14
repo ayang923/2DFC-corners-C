@@ -1,7 +1,10 @@
 {
     "files.associations": {
         "stdio.h": "c",
-        "stddef.h": "c"
+        "stddef.h": "c",
+        "numbers": "c",
+        "s_patch_lib.h": "c",
+        "curve_seq_lib.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

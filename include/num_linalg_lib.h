@@ -4,6 +4,10 @@
 #include <mkl.h>
 #include <stdlib.h>
 
+typedef double (*scalar_func_t) (double theta);
+
+typedef double (*scalar_func_2D_t) (double x, double y);
+
 /**
  * @brief Real, double matrix
  * 

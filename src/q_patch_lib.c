@@ -6,7 +6,7 @@
 #include "q_patch_lib.h"
 #include "num_linalg_lib.h"
 
-void phi_1D(rd_mat_t x, rd_mat_t *phi_1D_vals);
+void w_1D(rd_mat_t x, rd_mat_t *w_1D_vals);
 
 void shift_idx_mesh(ri_mat_t *mat, int min_bound, int max_bound) {
     if (mat->mat_data[0] < min_bound) {
@@ -17,7 +17,7 @@ void shift_idx_mesh(ri_mat_t *mat, int min_bound, int max_bound) {
     }
 }
 
-void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t *f_XY, void* phi_param) {
+void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t *f_XY) {
     q_patch->M_p = M_p;
     q_patch->J = J;
     q_patch->eps_xi_eta = eps_xi_eta;
@@ -30,17 +30,17 @@ void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, doubl
     q_patch->eta_start = eta_start;
     q_patch->eta_end = eta_end;
 
-    q_patch->h_xi = (xi_end-xi_start)/n_xi;
-    q_patch->h_eta = (eta_end-eta_start)/n_eta;
+    q_patch->h_xi = (xi_end-xi_start)/(n_xi-1);
+    q_patch->h_eta = (eta_end-eta_start)/(n_eta-1);
 
     q_patch->f_XY = f_XY;
+    rd_mat_shape(f_XY, n_eta, n_xi);
 
-    q_patch->phi_1D = (phi_1D_t) phi_1D;
-    q_patch->phi_param = phi_param;
+    q_patch->w_1D = (w_1D_t) w_1D;
 }
 
 MKL_INT q_patch_grid_num_el(q_patch_t *q_patch) {
-    return (q_patch->n_xi+1)*(q_patch->n_eta+1);
+    return (q_patch->n_xi)*(q_patch->n_eta);
 }
 
 void q_patch_evaulate_M_p(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, rd_mat_t *x, rd_mat_t *y) {
@@ -54,21 +54,21 @@ void q_patch_evaulate_J(q_patch_t *q_patch, rd_mat_t v, rd_mat_t *J_vals) {
 }
 
 void q_patch_xi_mesh(q_patch_t *q_patch, rd_mat_t *xi_mesh_vals) {
-    rd_mat_shape(xi_mesh_vals, q_patch->n_xi+1, 1);
-    rd_linspace(q_patch->xi_start, q_patch->xi_end, q_patch->n_xi+1, xi_mesh_vals);
+    rd_mat_shape(xi_mesh_vals, q_patch->n_xi, 1);
+    rd_linspace(q_patch->xi_start, q_patch->xi_end, q_patch->n_xi, xi_mesh_vals);
 }
 
 void q_patch_eta_mesh(q_patch_t *q_patch, rd_mat_t *eta_mesh_vals) {
-    rd_mat_shape(eta_mesh_vals, q_patch->n_eta+1, 1);
-    rd_linspace(q_patch->eta_start, q_patch->eta_end, q_patch->n_eta+1, eta_mesh_vals);
+    rd_mat_shape(eta_mesh_vals, q_patch->n_eta, 1);
+    rd_linspace(q_patch->eta_start, q_patch->eta_end, q_patch->n_eta, eta_mesh_vals);
 }
 
 void q_patch_xi_eta_mesh(q_patch_t *q_patch, rd_mat_t *XI_vals, rd_mat_t *ETA_vals) {
-    double xi_mesh_data[q_patch->n_xi+1];
+    double xi_mesh_data[q_patch->n_xi];
     rd_mat_t xi_mesh = rd_mat_init_no_shape(xi_mesh_data);
     q_patch_xi_mesh(q_patch, &xi_mesh);
 
-    double eta_mesh_data[q_patch->n_eta+1];
+    double eta_mesh_data[q_patch->n_eta];
     rd_mat_t eta_mesh = rd_mat_init_no_shape(eta_mesh_data);
     q_patch_eta_mesh(q_patch, &eta_mesh);
 
@@ -89,15 +89,18 @@ void q_patch_xy_mesh(q_patch_t *q_patch, rd_mat_t *X_vals, rd_mat_t *Y_vals) {
     q_patch_convert_to_XY(q_patch, XI, ETA, X_vals, Y_vals);
 }
 
-void q_patch_evaluate_f(q_patch_t *q_patch, f_handle_t f) {
+void q_patch_evaluate_f(q_patch_t *q_patch, scalar_func_2D_t f) {
     double X_data[q_patch_grid_num_el(q_patch)];
     double Y_data[q_patch_grid_num_el(q_patch)];
     rd_mat_t X = rd_mat_init_no_shape(X_data);
     rd_mat_t Y = rd_mat_init_no_shape(Y_data);
 
     q_patch_xy_mesh(q_patch, &X, &Y);
-
-    f(X, Y, q_patch->f_XY);
+    print_matrix(X);
+    print_matrix(Y);
+    for (int i = 0; i < q_patch->n_eta*q_patch->n_xi; i++) {
+        q_patch->f_XY->mat_data[i] = f(X_data[i], Y_data[i]);
+    }
 }
 
 void q_patch_in_patch(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, ri_mat_t *in_patch_msk) {
@@ -254,8 +257,8 @@ locally_compute_return_type_t q_patch_locally_compute(q_patch_t *q_patch, double
         ri_range(eta_j-half_M+1, 1, eta_j+half_M, &interpol_eta_j_mesh);
     }
 
-    shift_idx_mesh(&interpol_xi_j_mesh, 0, q_patch->n_xi);
-    shift_idx_mesh(&interpol_eta_j_mesh, 0, q_patch->n_eta);
+    shift_idx_mesh(&interpol_xi_j_mesh, 0, q_patch->n_xi-1);
+    shift_idx_mesh(&interpol_eta_j_mesh, 0, q_patch->n_eta-1);
 
     double interpol_xi_mesh_data[M];
     double interpol_eta_mesh_data[M];
@@ -287,16 +290,12 @@ locally_compute_return_type_t q_patch_locally_compute(q_patch_t *q_patch, double
     return (locally_compute_return_type_t) {f_xy, 1};
 }
 
-phi_1D_t return_phi_1D(void) {
-    return (phi_1D_t) phi_1D;
-}
-
-void phi_1D(rd_mat_t x, rd_mat_t *phi_1D_vals) {
+void w_1D(rd_mat_t x, rd_mat_t *w_1D_vals) {
     MKL_INT size = x.rows*x.columns;
     double one = 1.0;
-    cblas_dcopy(size, &one, 0, phi_1D_vals->mat_data, 1);
-    cblas_daxpy(size, -2, x.mat_data, 1, phi_1D_vals->mat_data, 1);
-    cblas_dscal(size, 6, phi_1D_vals->mat_data, 1);
-    vdErfc(size, phi_1D_vals->mat_data, phi_1D_vals->mat_data);
-    cblas_dscal(size, 0.5, phi_1D_vals->mat_data, 1);
+    cblas_dcopy(size, &one, 0, w_1D_vals->mat_data, 1);
+    cblas_daxpy(size, -2, x.mat_data, 1, w_1D_vals->mat_data, 1);
+    cblas_dscal(size, 6, w_1D_vals->mat_data, 1);
+    vdErfc(size, w_1D_vals->mat_data, w_1D_vals->mat_data);
+    cblas_dscal(size, 0.5, w_1D_vals->mat_data, 1);
 }

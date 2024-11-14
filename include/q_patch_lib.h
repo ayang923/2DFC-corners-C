@@ -38,22 +38,12 @@ typedef struct J {
 } J_t;
 
 /**
- * @brief phi handle type
- * 
- * @param xi: vector of xi values
- * @param eta: vector of eta values
- * @param phi_vals: address of where to store phi values
- * @param extra_param: allows us to put in a struct if needed for extra parameters
- */
-typedef void (*phi_handle_t) (rd_mat_t xi, rd_mat_t eta, rd_mat_t *phi_vals, void* extra_param);
-
-/**
  * @brief phi_1D handle type
  * 
  * @param x: vector of 1D input
  * @param phi_1D_vals: address of where to store output
  */
-typedef void (*phi_1D_t) (rd_mat_t x, rd_mat_t *phi_1D_vals);
+typedef void (*w_1D_t) (rd_mat_t x, rd_mat_t *w_1D_vals);
 
 /**
  * @brief q_patch type struct
@@ -74,8 +64,7 @@ typedef struct q_patch {
     double h_eta;
 
     rd_mat_t *f_XY;
-    phi_1D_t phi_1D;
-    void* phi_param;
+    w_1D_t w_1D;
 
     double eps_xi_eta;
     double eps_xy;
@@ -98,7 +87,7 @@ typedef struct q_patch {
  * @param f_XY 
  * @param phi 
  */
-void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t *f_XY, void* phi_param);
+void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t *f_XY);
 
 MKL_INT q_patch_grid_num_el(q_patch_t *q_patch);
 
@@ -127,9 +116,7 @@ void q_patch_convert_to_XY(q_patch_t *q_patch, rd_mat_t XI, rd_mat_t ETA, rd_mat
 
 void q_patch_xy_mesh(q_patch_t *q_patch, rd_mat_t *X_vals, rd_mat_t *Y_vals);
 
-typedef void (*f_handle_t) (rd_mat_t x, rd_mat_t y, rd_mat_t *f_xy);
-
-void q_patch_evaluate_f(q_patch_t *q_patch, f_handle_t f);
+void q_patch_evaluate_f(q_patch_t *q_patch, scalar_func_2D_t f);
 
 typedef struct inverse_M_p_return_type {
     double xi;
@@ -145,7 +132,5 @@ typedef struct locally_compute_return_type {
 } locally_compute_return_type_t;
 
 locally_compute_return_type_t q_patch_locally_compute(q_patch_t *q_patch, double xi, double eta, int M);
-
-phi_1D_t return_phi_1D(void);
 
 #endif
