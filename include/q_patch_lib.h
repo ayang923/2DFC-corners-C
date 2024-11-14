@@ -95,7 +95,7 @@ MKL_INT q_patch_grid_num_el(q_patch_t *q_patch);
  * @brief wrapper function for evaluating M_p
  * 
  */
-void q_patch_evaulate_M_p(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, rd_mat_t *x, rd_mat_t *y);
+void q_patch_evaluate_M_p(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, rd_mat_t *x, rd_mat_t *y);
 
 /**
  * @brief wrapper function for evaluating J
@@ -104,7 +104,7 @@ void q_patch_evaulate_M_p(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, rd_mat_
  * @param v 
  * @param J_vals 
  */
-void q_patch_evaulate_J(q_patch_t *q_patch, rd_mat_t v, rd_mat_t *J_vals);
+void q_patch_evaluate_J(q_patch_t *q_patch, rd_mat_t v, rd_mat_t *J_vals);
 
 void q_patch_xi_mesh(q_patch_t *q_patch, rd_mat_t *xi_mesh_vals);
 

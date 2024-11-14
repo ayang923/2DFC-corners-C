@@ -43,13 +43,13 @@ MKL_INT q_patch_grid_num_el(q_patch_t *q_patch) {
     return (q_patch->n_xi)*(q_patch->n_eta);
 }
 
-void q_patch_evaulate_M_p(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, rd_mat_t *x, rd_mat_t *y) {
+void q_patch_evaluate_M_p(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, rd_mat_t *x, rd_mat_t *y) {
     rd_mat_shape(x, xi.rows, xi.columns);
     rd_mat_shape(y, xi.rows, xi.columns);
 
     q_patch->M_p.M_p_handle(xi, eta, x, y, q_patch->M_p.extra_param);
 }
-void q_patch_evaulate_J(q_patch_t *q_patch, rd_mat_t v, rd_mat_t *J_vals) {
+void q_patch_evaluate_J(q_patch_t *q_patch, rd_mat_t v, rd_mat_t *J_vals) {
     q_patch->J.J_handle(v, J_vals, q_patch->J.extra_param);
 }
 
@@ -76,7 +76,7 @@ void q_patch_xi_eta_mesh(q_patch_t *q_patch, rd_mat_t *XI_vals, rd_mat_t *ETA_va
 }
 
 void q_patch_convert_to_XY(q_patch_t *q_patch, rd_mat_t XI, rd_mat_t ETA, rd_mat_t *X_vals, rd_mat_t *Y_vals) {
-    q_patch_evaulate_M_p(q_patch, XI, ETA, X_vals, Y_vals);
+    q_patch_evaluate_M_p(q_patch, XI, ETA, X_vals, Y_vals);
 }
 
 void q_patch_xy_mesh(q_patch_t *q_patch, rd_mat_t *X_vals, rd_mat_t *Y_vals) {
@@ -96,8 +96,6 @@ void q_patch_evaluate_f(q_patch_t *q_patch, scalar_func_2D_t f) {
     rd_mat_t Y = rd_mat_init_no_shape(Y_data);
 
     q_patch_xy_mesh(q_patch, &X, &Y);
-    print_matrix(X);
-    print_matrix(Y);
     for (int i = 0; i < q_patch->n_eta*q_patch->n_xi; i++) {
         q_patch->f_XY->mat_data[i] = f(X_data[i], Y_data[i]);
     }
@@ -133,15 +131,15 @@ void q_patch_round_boundary_points(q_patch_t *q_patch, rd_mat_t *xi, rd_mat_t *e
 }
 
 inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, double y, rd_mat_t* initial_guesses_xi, rd_mat_t* initial_guesses_eta) {
+    // global data for the case no initial guesses are given
+    int N = 20;
+    int N_segment = ceil(N/4);
+    double initial_guesses_xi_data[N_segment*4];
+    double initial_guesses_eta_data[N_segment*4];
     rd_mat_t initial_guesses_xi_mat;
     rd_mat_t initial_guesses_eta_mat;
-    if (initial_guesses_xi == NULL || initial_guesses_eta == NULL) {
-        int N = 20;
-        int N_segment = ceil(N/4);
 
-        double initial_guesses_xi_data[N_segment*4];
-        double initial_guesses_eta_data[N_segment*4];
-
+    if (initial_guesses_xi == NULL || initial_guesses_eta == NULL) {        
         double xi_mesh_data[N_segment+1];
         double eta_mesh_data[N_segment+1];
         rd_mat_t xi_mesh = rd_mat_init(xi_mesh_data, N_segment+1, 1);
@@ -191,14 +189,14 @@ inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, doub
 
     int converged = 0;
 
-    for (MKL_INT k = 0; k < initial_guesses_xi->columns; k++) {
+    for (MKL_INT k = 0; k < initial_guesses_xi->rows; k++) {
         v.mat_data[0] = initial_guesses_xi->mat_data[k];
         v.mat_data[1] = initial_guesses_eta->mat_data[k];
 
         //newton solve with max iterations 100 and error tolerance given by q_patch
         for (MKL_INT i = 0; i < 100; i++) {
             // evaluates difference between solutions in real space
-            q_patch_evaulate_M_p(q_patch, rd_mat_init(v.mat_data, 1, 1), rd_mat_init(v.mat_data+1, 1, 1), &M_p_v_x, &M_p_v_y);
+            q_patch_evaluate_M_p(q_patch, rd_mat_init(v.mat_data, 1, 1), rd_mat_init(v.mat_data+1, 1, 1), &M_p_v_x, &M_p_v_y);
             vdSub(2, f_v_data, xy_exact_data, f_v_data);
             
             // convergence threshold
@@ -212,7 +210,7 @@ inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, doub
             v_prev.mat_data[1] = v.mat_data[1];
 
             //update step
-            q_patch_evaulate_J(q_patch, v, &J_addr);
+            q_patch_evaluate_J(q_patch, v, &J_addr);
             LAPACKE_dgesv(LAPACK_COL_MAJOR, 2, 1, J_addr.mat_data, 2, ipiv, f_v_data, 2);
             vdSub(2, v_data, f_v_data, v_data);
         }
@@ -222,6 +220,8 @@ inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, doub
         if (converged && in_patch) {
             return (inverse_M_p_return_type_t) {v_data[0], v_data[1], converged};
         }
+
+        converged = 0;
     }
 
     return (inverse_M_p_return_type_t) {v_data[0], v_data[1], converged};
@@ -280,7 +280,7 @@ locally_compute_return_type_t q_patch_locally_compute(q_patch_t *q_patch, double
     rd_mat_t interpol_val = rd_mat_init(interpol_val_data, M, 1);
     for (MKL_INT horz_idx = 0; horz_idx < M; horz_idx++) {
         for (MKL_INT i = 0; i < M; i++) {
-            interpol_xi_idxs[i] = sub2ind(q_patch->n_eta+1, q_patch->n_xi+1, (sub_t) {interpol_eta_j_mesh_data[horz_idx], interpol_xi_j_mesh_data[i]});
+            interpol_xi_idxs[i] = sub2ind(q_patch->n_eta, q_patch->n_xi, (sub_t) {interpol_eta_j_mesh_data[horz_idx], interpol_xi_j_mesh_data[i]});
         }
         vdPackV(M, q_patch->f_XY->mat_data, interpol_xi_idxs, interpol_val_data);
         interpol_xi_exact_data[horz_idx] = barylag(interpol_xi_mesh, interpol_val, xi);

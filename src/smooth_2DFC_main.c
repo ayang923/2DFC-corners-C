@@ -41,14 +41,15 @@ int main() {
     curve_seq_init(&curve_seq);
 
     curve_t curve_1;
-    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, 10, 1.0/10.0, 1.0/10.0, 0, 0, 0.005);
+    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, 30, 1.0/10.0, 1.0/10.0, 0, 0, 0.005);
 
     s_patch_t s_patch;
     double s_patch_f_XY_data[curve_S_patch_num_el(&curve_1, 7)];
     rd_mat_t s_patch_f_XY = rd_mat_init_no_shape(s_patch_f_XY_data);
     curve_construct_S_patch(&curve_1, &s_patch, &s_patch_f_XY, (scalar_func_2D_t) f, d, 1e-13, 1e-13);
 
-    print_matrix(s_patch_f_XY);
+    inverse_M_p_return_type_t result = q_patch_inverse_M_p(&(s_patch.q_patch), 0.65, 0.60, NULL, NULL);
+    printf("%lf, %lf, %d\n", result.xi, result.eta, result.converged);
 
     // M_p_S_extra_param_t M_p_S1_extra_param = {0, M_PI};
     // M_p_S_extra_param_t M_p_S2_extra_param = {M_PI, 2*M_PI};
