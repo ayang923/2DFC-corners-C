@@ -120,6 +120,13 @@ void q_patch_evaluate_f(q_patch_t *q_patch, scalar_func_2D_t f);
 
 void q_patch_apply_w_normalization_xi_right(q_patch_t *main_patch, q_patch_t *window_patch);
 
+void q_patch_apply_w_normalization_xi_left(q_patch_t *main_patch, q_patch_t *window_patch);
+
+void q_patch_apply_w_normalization_eta_up(q_patch_t *main_patch, q_patch_t *window_patch);
+
+void q_patch_apply_w_normalization_eta_down(q_patch_t *main_patch, q_patch_t *window_patch);
+
+
 typedef struct inverse_M_p_return_type {
     double xi;
     double eta;

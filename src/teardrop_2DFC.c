@@ -53,6 +53,23 @@ int main() {
 
     printf("%d\n", curve_seq.first_curve->n);
     q_patch_apply_w_normalization_xi_right(&(c_patches[0].W), &(s_patches[0].Q));
+    q_patch_apply_w_normalization_eta_up(&(c_patches[0].L), &(s_patches[0].Q));
+
+    FILE *fp;
+    fp = freopen("output.txt", "w", stdout);
+
+    if (fp == NULL) {
+        perror("Error opening file");
+        return 1;
+    }
+
+    print_matrix(*(c_patches[0].L.f_XY));
+
+    // print_matrix(*(s_patches[0].Q.f_XY));
+
+    fclose(fp);
+    freopen("/dev/tty", "w", stdout);
+
     // M_p_S_extra_param_t M_p_S1_extra_param = {0, M_PI};
     // M_p_S_extra_param_t M_p_S2_extra_param = {M_PI, 2*M_PI};
     // M_p_general_t M_p_general_S1 = {(M_p_general_handle_t) M_p_general_S, (void *) &M_p_S1_extra_param};

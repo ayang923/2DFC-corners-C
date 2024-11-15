@@ -143,7 +143,7 @@ void print_matrix(rd_mat_t mat) {
     for (MKL_INT i = 0; i < mat.rows; i++) {
         for (MKL_INT j = 0; j < mat.columns; j++) {
             MKL_INT idx = sub2ind(mat.rows, mat.columns, (sub_t) {i, j});
-            printf("%f ", mat.mat_data[idx]);
+            printf("%.16f ", mat.mat_data[idx]);
         }
         printf("\n");
     }
