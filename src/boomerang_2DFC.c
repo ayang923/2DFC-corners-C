@@ -47,7 +47,7 @@ int main() {
     curve_seq_init(&curve_seq);
 
     curve_t curve_1;
-    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, 100, 1.0/10.0, 1.0/10.0, 0, 0, 0.005);
+    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, 0, 1.0/10.0, 1.0/10.0, 0, 0, 0.005);
 
     c_patch_t c_patches[curve_seq.n_curves];
     s_patch_t s_patches[curve_seq.n_curves];
@@ -57,7 +57,24 @@ int main() {
 
     curve_seq_construct_patches(&curve_seq, s_patches, c_patches, f_arrays, f_points, f, d, 1e-13, 1e-13);
 
-    print_matrix(*(c_patches[0].W.f_XY));
+    printf("%d\n", curve_seq.first_curve->n);
+    q_patch_apply_w_normalization_xi_left(&(c_patches[0].W), &(s_patches[0].Q));
+    q_patch_apply_w_normalization_eta_down(&(c_patches[0].L), &(s_patches[0].Q));
+
+    FILE *fp;
+    fp = freopen("output.txt", "w", stdout);
+
+    if (fp == NULL) {
+        perror("Error opening file");
+        return 1;
+    }
+
+    print_matrix(*(s_patches[0].Q.f_XY));
+
+    // print_matrix(*(s_patches[0].Q.f_XY));
+
+    fclose(fp);
+    freopen("/dev/tty", "w", stdout);
     // M_p_S_extra_param_t M_p_S1_extra_param = {0, M_PI};
     // M_p_S_extra_param_t M_p_S2_extra_param = {M_PI, 2*M_PI};
     // M_p_general_t M_p_general_S1 = {(M_p_general_handle_t) M_p_general_S, (void *) &M_p_S1_extra_param};

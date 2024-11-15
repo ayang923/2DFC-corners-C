@@ -661,7 +661,7 @@ void compute_eta_overlap_mesh(q_patch_t *main_patch, double eta_corner, bool win
         ri_meshgrid(xi_mesh, eta_mesh, XI_j, ETA_j);
     }
     else {
-        MKL_INT eta_corner_j = ceil((eta_corner-main_patch->eta_start)/main_patch->h_eta);
+        MKL_INT eta_corner_j = floor((eta_corner-main_patch->eta_start)/main_patch->h_eta);
         MKL_INT overlap_n_eta = eta_corner_j + 1;
 
         MKL_INT xi_mesh_data[main_patch->n_xi];
