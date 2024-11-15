@@ -20,3 +20,19 @@ void c1_patch_init(c_patch_t *c_patch, M_p_t M_p, J_t J, double eps_xi_eta, doub
     q_patch_init(&(c_patch->L), M_p, J, eps_xi_eta, eps_xy, d, (n_eta+1)/2+(d-1), 1.0/2.0, 1.0/2.0+(d-1)*h_xi, 0.0, 1.0/2.0+(d-1)*h_eta, f_L);
     c_patch->c_patch_type = C1;
 }
+
+void c1_patch_apply_w_W(c_patch_t *c_patch, s_patch_t *window_patch_W) {
+    q_patch_apply_w_normalization_xi_left(&(c_patch->W), &(window_patch_W->Q));
+}
+
+void c1_patch_apply_w_L(c_patch_t *c_patch, s_patch_t *window_patch_L) {
+    q_patch_apply_w_normalization_eta_down(&(c_patch->L), &(window_patch_L->Q));
+}
+
+void c2_patch_apply_w_W(c_patch_t *c_patch, s_patch_t *window_patch_W) {
+    q_patch_apply_w_normalization_xi_right(&(c_patch->W), &(window_patch_W->Q));
+}
+
+void c2_patch_apply_w_L(c_patch_t *c_patch, s_patch_t *window_patch_L) {
+    q_patch_apply_w_normalization_eta_up(&(c_patch->L), &(window_patch_L->Q));
+}

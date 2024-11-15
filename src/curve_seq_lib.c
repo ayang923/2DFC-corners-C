@@ -281,6 +281,8 @@ void curve_seq_construct_patches(curve_seq_t *curve_seq, s_patch_t *s_patches, c
     rd_mat_t *curr_f_mat = f_mats;
     double *curr_f_mat_point = f_mat_points;
 
+    s_patch_t *prev_s_patch;
+    c_patch_t *prev_c_patch;
     for (int i = 0; i < curve_seq->n_curves; i++) {
         curr_f_mat_point += curve_construct_S_patch(curr_curve, curr_s_patch, curr_f_mat, curr_f_mat_point, f, d, eps_xi_eta, eps_xy);
         curr_f_mat += 1;
@@ -288,8 +290,27 @@ void curve_seq_construct_patches(curve_seq_t *curve_seq, s_patch_t *s_patches, c
         curr_f_mat_point += curve_construct_C_patch(curr_curve, curr_c_patch, curr_f_mat, curr_f_mat+1, curr_f_mat_point, f, d, eps_xi_eta, eps_xy);
         curr_f_mat += 2;
 
+        if (i != 0) {
+            if (prev_c_patch->c_patch_type == C1) {
+                c1_patch_apply_w_W(prev_c_patch, prev_s_patch);
+                c1_patch_apply_w_L(prev_c_patch, curr_s_patch);
+            } else {
+                c2_patch_apply_w_W(prev_c_patch, prev_s_patch);
+                c2_patch_apply_w_L(prev_c_patch, curr_s_patch);
+            }
+        }
+        
+        prev_s_patch = curr_s_patch;
+        prev_c_patch = curr_c_patch;
         curr_curve = curr_curve->next_curve;
         curr_c_patch += 1;
         curr_s_patch += 1;
+    }
+    if (curr_c_patch->c_patch_type == C1) {
+        c1_patch_apply_w_W(prev_c_patch, prev_s_patch);
+        c1_patch_apply_w_L(prev_c_patch, s_patches);
+    } else {
+        c2_patch_apply_w_W(prev_c_patch, prev_s_patch);
+        c2_patch_apply_w_L(prev_c_patch, s_patches);
     }
 }

@@ -51,10 +51,6 @@ int main() {
 
     curve_seq_construct_patches(&curve_seq, s_patches, c_patches, f_arrays, f_points, f, d, 1e-13, 1e-13);
 
-    printf("%d\n", curve_seq.first_curve->n);
-    q_patch_apply_w_normalization_xi_right(&(c_patches[0].W), &(s_patches[0].Q));
-    q_patch_apply_w_normalization_eta_up(&(c_patches[0].L), &(s_patches[0].Q));
-
     FILE *fp;
     fp = freopen("output.txt", "w", stdout);
 
