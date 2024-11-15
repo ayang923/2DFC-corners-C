@@ -90,6 +90,8 @@ void ri_mat_shape(ri_mat_t *mat, MKL_INT rows, MKL_INT columns);
 
 void ri_range(int start, int step_size, int end, ri_mat_t *mat_addr);
 
+void ri_meshgrid(ri_mat_t x, ri_mat_t y, ri_mat_t *X, ri_mat_t *Y);
+
 void print_matrix(rd_mat_t mat);
 
 void ri_print_matrix(ri_mat_t mat);

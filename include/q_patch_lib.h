@@ -43,7 +43,7 @@ typedef struct J {
  * @param x: vector of 1D input
  * @param phi_1D_vals: address of where to store output
  */
-typedef void (*w_1D_t) (rd_mat_t x, rd_mat_t *w_1D_vals);
+typedef void (*w_1D_t) (rd_mat_t theta, rd_mat_t *w_1D_vals);
 
 /**
  * @brief q_patch type struct
@@ -117,6 +117,8 @@ void q_patch_convert_to_XY(q_patch_t *q_patch, rd_mat_t XI, rd_mat_t ETA, rd_mat
 void q_patch_xy_mesh(q_patch_t *q_patch, rd_mat_t *X_vals, rd_mat_t *Y_vals);
 
 void q_patch_evaluate_f(q_patch_t *q_patch, scalar_func_2D_t f);
+
+void q_patch_apply_w_normalization_xi_right(q_patch_t *main_patch, q_patch_t *window_patch);
 
 typedef struct inverse_M_p_return_type {
     double xi;

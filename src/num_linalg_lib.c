@@ -76,6 +76,23 @@ void ri_range(int start, int step_size, int end, ri_mat_t *mat_addr) {
     }
 }
 
+void ri_meshgrid(ri_mat_t x, ri_mat_t y, ri_mat_t *X, ri_mat_t *Y) {
+    // assumes x and y are column vectors
+
+    X->rows = y.rows;
+    X->columns = x.rows;
+    Y->rows = y.rows;
+    Y->columns = x.rows;
+
+    for (MKL_INT i = 0; i < y.rows; i++) {
+        for (MKL_INT j = 0; j < x.rows; j++) {
+            MKL_INT idx = sub2ind(y.rows, x.rows, (sub_t) {i, j});
+            X->mat_data[idx] = x.mat_data[j];
+            Y->mat_data[idx] = y.mat_data[i];
+        }
+    }
+}
+
 void ri_print_matrix(ri_mat_t mat) {
     for (MKL_INT i = 0; i < mat.rows; i++) {
         for (MKL_INT j = 0; j < mat.columns; j++) {
