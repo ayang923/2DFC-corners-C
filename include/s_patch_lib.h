@@ -18,7 +18,7 @@ typedef struct M_p_general {
 } M_p_general_t;
 
 typedef struct s_patch {
-    q_patch_t q_patch;
+    q_patch_t Q;
     M_p_general_t M_p_general;
     J_general_t J_general;
     double h;

@@ -1,8 +1,8 @@
 CC = icx
 CFLAGS = -Wall -Wextra -Iinclude/  -qmkl=sequential -g -fsanitize=address
 
-TARGETS = smooth_2DFC_main
-LIBS = q_patch_lib num_linalg_lib s_patch_lib fc_lib curve_seq_lib
+TARGETS = teardrop_2DFC
+LIBS = q_patch_lib num_linalg_lib s_patch_lib fc_lib curve_seq_lib c_patch_lib
 
 OBJS = $(addprefix out/,$(LIBS:=.o)) $(addprefix out/,$(TARGETS:=.o)) 
 BINS = $(addprefix bin/,$(TARGETS))
