@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include "num_linalg_lib.h"
+#include <stdbool.h>
 
 /**
  * @brief M_p function handle type
@@ -117,6 +118,12 @@ void q_patch_convert_to_XY(q_patch_t *q_patch, rd_mat_t XI, rd_mat_t ETA, rd_mat
 void q_patch_xy_mesh(q_patch_t *q_patch, rd_mat_t *X_vals, rd_mat_t *Y_vals);
 
 void q_patch_evaluate_f(q_patch_t *q_patch, scalar_func_2D_t f);
+
+MKL_INT q_patch_boundary_mesh_num_el(q_patch_t *q_patch);
+
+void q_patch_boundary_mesh(q_patch_t *q_patch, bool pad_boundary, rd_mat_t *boundary_mesh_xi, rd_mat_t *boundary_mesh_eta);
+
+void q_patch_boundary_mesh_xy(q_patch_t *q_patch, bool pad_boundary, rd_mat_t *boundary_mesh_x, rd_mat_t *boundary_mesh_y);
 
 void q_patch_apply_w_normalization_xi_right(q_patch_t *main_patch, q_patch_t *window_patch);
 

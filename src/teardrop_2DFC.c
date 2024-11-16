@@ -98,6 +98,7 @@ int main() {
     double y_max = 1.135000000000000;
 
     r_cartesian_mesh_obj_t r_cartesian_mesh_obj;
+    r_cartesian_mesh_init(&r_cartesian_mesh_obj, x_min-h, x_max+h, y_min-h, y_max+h, h, boundary_X, boundary_Y, NULL, NULL, NULL);
 
     FILE *fp;
     fp = freopen("output.txt", "w", stdout);
@@ -106,7 +107,8 @@ int main() {
         perror("Error opening file");
         return 1;
     }
-    r_cartesian_mesh_init(&r_cartesian_mesh_obj, x_min-h, x_max+h, y_min-h, y_max+h, h, boundary_X, boundary_Y, NULL, NULL, NULL);
+
+    r_cartesian_mesh_interpolate_patch(&r_cartesian_mesh_obj, fc_patches, d+3);
 
     fclose(fp);
     freopen("/dev/tty", "w", stdout);

@@ -129,6 +129,70 @@ void q_patch_round_boundary_points(q_patch_t *q_patch, rd_mat_t *xi, rd_mat_t *e
     }
 }
 
+MKL_INT q_patch_boundary_mesh_num_el(q_patch_t *q_patch) {
+    return 2*q_patch->n_xi + 2*q_patch->n_eta + 1;
+}
+
+void q_patch_boundary_mesh(q_patch_t *q_patch, bool pad_boundary, rd_mat_t *boundary_mesh_xi, rd_mat_t *boundary_mesh_eta) {
+    double pad_xi = 0;
+    double pad_eta = 0;
+    if(pad_boundary) {
+        pad_xi = q_patch->h_xi;
+        pad_eta = q_patch->h_eta;
+    }
+
+    rd_mat_shape(boundary_mesh_xi, q_patch_boundary_mesh_num_el(q_patch), 1);
+    rd_mat_shape(boundary_mesh_eta, q_patch_boundary_mesh_num_el(q_patch), 1);
+
+    double padded_xi_start = q_patch->xi_start - pad_xi;
+    double padded_xi_end = q_patch->xi_end + pad_xi;
+    double padded_eta_start = q_patch->eta_start - pad_eta;
+    double padded_eta_end = q_patch->eta_end + pad_eta;
+
+    //copying in fixed parts of boundary mesh
+    cblas_dcopy(q_patch->n_eta, &padded_xi_start, 0, boundary_mesh_xi->mat_data, 1);
+    cblas_dcopy(q_patch->n_eta, &padded_xi_end, 0, boundary_mesh_xi->mat_data+q_patch->n_eta+q_patch->n_xi, 1);
+    cblas_dcopy(q_patch->n_xi, &padded_eta_end, 0, boundary_mesh_eta->mat_data+q_patch->n_eta, 1);
+    cblas_dcopy(q_patch->n_xi, &padded_eta_start, 0, boundary_mesh_eta->mat_data+q_patch->n_eta*2+q_patch->n_xi, 1);
+
+    boundary_mesh_xi->mat_data[q_patch_boundary_mesh_num_el(q_patch)-1] = padded_xi_start;
+    boundary_mesh_eta->mat_data[q_patch_boundary_mesh_num_el(q_patch)-1] = padded_eta_start;
+
+    double xi_mesh_data[q_patch->n_xi];
+    double eta_mesh_data[q_patch->n_eta];
+    rd_mat_t xi_mesh = rd_mat_init_no_shape(xi_mesh_data);
+    rd_mat_t eta_mesh = rd_mat_init_no_shape(eta_mesh_data);
+    
+    q_patch_xi_mesh(q_patch, &xi_mesh);
+    q_patch_eta_mesh(q_patch, &eta_mesh);
+
+    cblas_dcopy(q_patch->n_xi, xi_mesh_data, 1, boundary_mesh_xi->mat_data+q_patch->n_eta, 1);
+    cblas_dcopy(q_patch->n_eta, eta_mesh_data, 1, boundary_mesh_eta->mat_data, 1);
+
+    double reverse_xi_mesh_data[q_patch->n_xi];
+    double reverse_eta_mesh_data[q_patch->n_eta];
+    for (int i = 0; i < q_patch->n_xi; i++) {
+        reverse_xi_mesh_data[i] = xi_mesh_data[q_patch->n_xi-1-i];
+    }
+    for (int i = 0; i < q_patch->n_eta; i++) {
+        reverse_eta_mesh_data[i] = eta_mesh_data[q_patch->n_eta-1-i];
+    }
+
+    cblas_dcopy(q_patch->n_xi, reverse_xi_mesh_data, 1, boundary_mesh_xi->mat_data+q_patch->n_eta*2+q_patch->n_xi, 1);
+    cblas_dcopy(q_patch->n_eta, reverse_eta_mesh_data, 1, boundary_mesh_eta->mat_data+q_patch->n_eta+q_patch->n_xi, 1);
+}
+
+void q_patch_boundary_mesh_xy(q_patch_t *q_patch, bool pad_boundary, rd_mat_t *boundary_mesh_x, rd_mat_t *boundary_mesh_y) {
+    double boundary_mesh_xi_data[q_patch_boundary_mesh_num_el(q_patch)];
+    double boundary_mesh_eta_data[q_patch_boundary_mesh_num_el(q_patch)];
+    rd_mat_t boundary_mesh_xi = rd_mat_init_no_shape(boundary_mesh_xi_data);
+    rd_mat_t boundary_mesh_eta = rd_mat_init_no_shape(boundary_mesh_eta_data);
+
+    q_patch_boundary_mesh(q_patch, pad_boundary, &boundary_mesh_xi, &boundary_mesh_eta);
+    q_patch_convert_to_XY(q_patch, boundary_mesh_xi, boundary_mesh_eta, boundary_mesh_x, boundary_mesh_y);
+}
+
+
 inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, double y, rd_mat_t* initial_guesses_xi, rd_mat_t* initial_guesses_eta) {
     // global data for the case no initial guesses are given
     int N = 20;

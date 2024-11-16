@@ -5,6 +5,8 @@
 
 #include "r_cartesian_mesh_lib.h"
 #include "num_linalg_lib.h"
+#include "hashmap.h"
+#include "q_patch_lib.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -51,6 +53,17 @@ void r_cartesian_mesh_init(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, double 
     MKL_INT in_msk_data[r_cartesian_mesh_obj->n_x * r_cartesian_mesh_obj->n_y];
     ri_mat_t in_msk = ri_mat_init_no_shape(in_msk_data);
     inpolygon_mesh(R_X, R_Y, boundary_X, boundary_Y, &in_msk);
+
+}
+
+void r_cartesian_mesh_interpolate_patch(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, q_patch_t *q_patch, MKL_INT M) {
+    double bound_X_data[q_patch_boundary_mesh_num_el(q_patch)];
+    double bound_Y_data[q_patch_boundary_mesh_num_el(q_patch)];
+    rd_mat_t bound_X = rd_mat_init_no_shape(bound_X_data);
+    rd_mat_t bound_Y = rd_mat_init_no_shape(bound_Y_data);
+
+    q_patch_boundary_mesh_xy(q_patch, true, &bound_X, &bound_Y);
+    print_matrix(bound_X);
 }
 
 void inpolygon_mesh(rd_mat_t R_X, rd_mat_t R_Y, rd_mat_t boundary_X, rd_mat_t boundary_Y, ri_mat_t *in_msk) {
@@ -128,6 +141,7 @@ void inpolygon_mesh(rd_mat_t R_X, rd_mat_t R_Y, rd_mat_t boundary_X, rd_mat_t bo
         }
     }
 
+    MKL_INT n_points_interior = 0;
     for(int row_idx = 0; row_idx < in_msk->rows; row_idx++) {
         bool in_interior = false;
         for (int col_idx = 0; col_idx < in_msk->columns; col_idx++) {
@@ -143,6 +157,4 @@ void inpolygon_mesh(rd_mat_t R_X, rd_mat_t R_Y, rd_mat_t boundary_X, rd_mat_t bo
             }
         }
     }
-
-    ri_print_matrix(*in_msk);
 }
