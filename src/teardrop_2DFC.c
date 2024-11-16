@@ -84,6 +84,13 @@ int main() {
         curr_fc_mat += 3;
     }
 
+    double boundary_X_data[curve_seq_boundary_mesh_num_el(&curve_seq, n_r)];
+    double boundary_Y_data[curve_seq_boundary_mesh_num_el(&curve_seq, n_r)];
+    rd_mat_t boundary_X = rd_mat_init_no_shape(boundary_X_data);
+    rd_mat_t boundary_Y = rd_mat_init_no_shape(boundary_Y_data);
+
+    curve_seq_construct_boundary_mesh(&curve_seq, n_r, &boundary_X, &boundary_Y);
+
     FILE *fp;
     fp = freopen("output.txt", "w", stdout);
 
@@ -91,57 +98,9 @@ int main() {
         perror("Error opening file");
         return 1;
     }
-    print_matrix(*(fc_patches[1].f_XY));
 
     fclose(fp);
     freopen("/dev/tty", "w", stdout);
-
-    // M_p_S_extra_param_t M_p_S1_extra_param = {0, M_PI};
-    // M_p_S_extra_param_t M_p_S2_extra_param = {M_PI, 2*M_PI};
-    // M_p_general_t M_p_general_S1 = {(M_p_general_handle_t) M_p_general_S, (void *) &M_p_S1_extra_param};
-    // M_p_general_t M_p_general_S2 = {(M_p_general_handle_t) M_p_general_S, (void *) &M_p_S2_extra_param};
-
-    // double h = 0.01;
-    // MKL_INT n_S = (MKL_INT) round(M_PI/h);
-
-    // MKL_INT d = 4;
-    // MKL_INT C = 27;
-    // MKL_INT n_r = 6;
-
-    // double f_S1_data[(n_S+1)*(d+1)];
-    // rd_mat_t f_S1 = rd_mat_init(f_S1_data, d+1, n_S+1);
-    // double f_S2_data[(n_S+1)*(d+1)];
-    // rd_mat_t f_S2 = rd_mat_init(f_S2_data, d+1, n_S+1);
-
-    // s_patch_t s1_patch;
-    // s_patch_init(&s1_patch, M_p_general_S1, (J_general_t) {(J_general_handle_t) M_p_general_S, NULL}, 1e-13, 1e-13, n_S, d, 0, 1, 0, 1, &f_S1, h, NULL);
-    // s_patch_t s2_patch;
-    // s_patch_init(&s2_patch, M_p_general_S2, (J_general_t) {(J_general_handle_t) M_p_general_S, NULL}, 1e-13, 1e-13, n_S, d, 0, 1, 0, 1, &f_S2, h, NULL);
-
-    // q_patch_evaluate_f((q_patch_t*) &s1_patch, (f_handle_t) f);
-    // q_patch_evaluate_f((q_patch_t*) &s2_patch, (f_handle_t) f);
-    
-    // //reading continuation matrices
-    // double A_data[fc_A_numel(d, C, n_r)];
-    // double Q_data[fc_Q_numel(d)];
-    // rd_mat_t A = {A_data, 0, 0};
-    // rd_mat_t Q = {Q_data, 0, 0};
-
-    // read_fc_matrix(d, C, n_r, "fc_data/A_d4_C27_r6.txt", "fc_data/Q_d4_C27_r6.txt", &A, &Q);
-
-    // s_patch_t s1_FC_patch;
-    // double s1_f_FC_data[s_patch_FC_num_el(&s1_patch, C, n_r)];
-    // rd_mat_t s1_f_FC = {s1_f_FC_data, 0, 0};
-
-    // s_patch_t s2_FC_patch;
-    // double s2_f_FC_data[s_patch_FC_num_el(&s2_patch, C, n_r)];
-    // rd_mat_t s2_f_FC = {s2_f_FC_data, 0, 0};
-
-    // s_patch_FC_init(&s1_patch, C, n_r, &s1_f_FC, &s1_FC_patch);
-    // s_patch_FC_init(&s2_patch, C, n_r, &s2_f_FC, &s2_FC_patch);
-
-    // s_patch_FC(&s1_patch, d, A, Q, NULL, &s1_FC_patch);
-    // s_patch_FC(&s2_patch, d, A, Q, NULL, &s2_FC_patch);
 
     return 0;
 }

@@ -104,4 +104,8 @@ MKL_INT curve_seq_num_FC_mats(curve_seq_t *curve_seq);
 
 MKL_INT curve_seq_num_FC_points(curve_seq_t *curve_seq, s_patch_t *s_patches, c_patch_t *c_patches, MKL_INT C, MKL_INT n_r, MKL_INT d);
 
+MKL_INT curve_seq_boundary_mesh_num_el(curve_seq_t *curve_seq, MKL_INT n_r);
+
+void curve_seq_construct_boundary_mesh(curve_seq_t *curve_seq, MKL_INT n_r, rd_mat_t *boundary_X, rd_mat_t *boundary_Y);
+
 #endif

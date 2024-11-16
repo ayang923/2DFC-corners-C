@@ -335,3 +335,37 @@ MKL_INT curve_seq_num_FC_points(curve_seq_t *curve_seq, s_patch_t *s_patches, c_
 
     return total_points;
 }
+
+MKL_INT curve_seq_boundary_mesh_num_el(curve_seq_t *curve_seq, MKL_INT n_r) {
+    curve_t *curr_curve = curve_seq->first_curve;
+    MKL_INT n_points = 0;
+    for (int i = 0; i < curve_seq->n_curves; i++) {
+        n_points += (curr_curve->n-1)*n_r + 1;
+        curr_curve = curr_curve->next_curve;
+    }
+
+    return n_points;
+}
+
+void curve_seq_construct_boundary_mesh(curve_seq_t *curve_seq, MKL_INT n_r, rd_mat_t *boundary_X, rd_mat_t *boundary_Y) {
+    MKL_INT n_points = curve_seq_boundary_mesh_num_el(curve_seq, n_r);
+    rd_mat_shape(boundary_X, n_points, 1);
+    rd_mat_shape(boundary_Y, n_points, 1);
+
+    MKL_INT curr_idx = 0;
+    curve_t *curr_curve = curve_seq->first_curve;
+    for (int i = 0; i < curve_seq->n_curves; i++) {
+        MKL_INT n_curve = (curr_curve->n-1)*n_r+1;
+
+        double theta_mesh_data[n_curve];
+        rd_mat_t theta_mesh = rd_mat_init(theta_mesh_data, n_curve, 1);
+        rd_linspace(0, 1, n_curve, &theta_mesh);
+
+        for (int j = 0; j < n_curve; j++) {
+            boundary_X->mat_data[curr_idx+j] = curr_curve->l_1(theta_mesh_data[j]);
+            boundary_Y->mat_data[curr_idx+j] = curr_curve->l_2(theta_mesh_data[j]);
+        }
+
+        curr_idx += n_curve;
+    }
+}
