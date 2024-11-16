@@ -6,6 +6,7 @@
 #include "s_patch_lib.h"
 #include "q_patch_lib.h"
 #include "fc_lib.h"
+#include "r_cartesian_mesh_lib.h"
 
 double f(double x, double y) {
     return 4+(1+pow(x, 2) + pow(y, 2))*(sin(2.5*M_PI*x-0.5)+cos(2*M_PI*y-0.5));
@@ -36,7 +37,7 @@ double l_2_dprime(double theta) {
 }
 
 int main() {
-    
+    double h = 0.005;
     //reading continuation matrices
     MKL_INT d = 4;
     MKL_INT C = 27;
@@ -52,7 +53,7 @@ int main() {
     curve_seq_init(&curve_seq);
 
     curve_t curve_1;
-    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, 0, 1.0/10.0, 1.0/10.0, 0, 0, 0.005);
+    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, 0, 1.0/10.0, 1.0/10.0, 0, 0, h);
 
     c_patch_t c_patches[curve_seq.n_curves];
     s_patch_t s_patches[curve_seq.n_curves];
@@ -91,6 +92,13 @@ int main() {
 
     curve_seq_construct_boundary_mesh(&curve_seq, n_r, &boundary_X, &boundary_Y);
 
+    double x_min = -0.277884193264275;
+    double x_max = 2.135000000000000;
+    double y_min = -1.135000000000000;
+    double y_max = 1.135000000000000;
+
+    r_cartesian_mesh_obj_t r_cartesian_mesh_obj;
+
     FILE *fp;
     fp = freopen("output.txt", "w", stdout);
 
@@ -98,6 +106,7 @@ int main() {
         perror("Error opening file");
         return 1;
     }
+    r_cartesian_mesh_init(&r_cartesian_mesh_obj, x_min-h, x_max+h, y_min-h, y_max+h, h, boundary_X, boundary_Y, NULL, NULL, NULL);
 
     fclose(fp);
     freopen("/dev/tty", "w", stdout);
