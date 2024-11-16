@@ -19,13 +19,13 @@ MKL_INT n_1D(double start_bound, double end_bound, double h) {
     return round((round_end_bound(start_bound, end_bound, h)-start_bound)/h) + 1;
 }
 
-MKL_INT n_total(double x_start, double x_end, double y_start, double y_end, double h) {
+MKL_INT r_cartesian_n_total(double x_start, double x_end, double y_start, double y_end, double h) {
     return n_1D(x_start, x_end, h) * n_1D(y_start, y_end, h);
 }
 
-void inpolygon_mesh(rd_mat_t R_X, rd_mat_t R_Y, rd_mat_t boundary_X, rd_mat_t boundary_Y, ri_mat_t *in_msk);
+MKL_INT inpolygon_mesh(rd_mat_t R_X, rd_mat_t R_Y, rd_mat_t boundary_X, rd_mat_t boundary_Y, ri_mat_t *in_msk);
 
-void r_cartesian_mesh_init(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, double x_start, double x_end, double y_start, double y_end, double h, rd_mat_t boundary_X, rd_mat_t boundary_Y, ri_mat_t *in_interior, ri_mat_t *interior_idxs, rd_mat_t *f_XY) {
+void r_cartesian_mesh_init(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, double x_start, double x_end, double y_start, double y_end, double h, rd_mat_t boundary_X, rd_mat_t boundary_Y, rd_mat_t *R_X, rd_mat_t *R_Y, ri_mat_t *in_interior, rd_mat_t *f_R) {
     r_cartesian_mesh_obj->x_start = x_start;
     r_cartesian_mesh_obj->y_start = y_start;
 
@@ -37,6 +37,10 @@ void r_cartesian_mesh_init(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, double 
     r_cartesian_mesh_obj->n_x = n_1D(x_start, x_end, h);
     r_cartesian_mesh_obj->n_y = n_1D(y_start, y_end, h);
 
+    r_cartesian_mesh_obj->R_X = R_X;
+    r_cartesian_mesh_obj->R_Y = R_Y;
+    r_cartesian_mesh_obj->in_interior = in_interior;
+
     double x_mesh_data[r_cartesian_mesh_obj->n_x];
     double y_mesh_data[r_cartesian_mesh_obj->n_y];
     rd_mat_t x_mesh = rd_mat_init(x_mesh_data, r_cartesian_mesh_obj->n_x, 1);
@@ -44,16 +48,8 @@ void r_cartesian_mesh_init(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, double 
     rd_linspace(r_cartesian_mesh_obj->x_start, r_cartesian_mesh_obj->x_end, r_cartesian_mesh_obj->n_x, &x_mesh);
     rd_linspace(r_cartesian_mesh_obj->y_start, r_cartesian_mesh_obj->y_end, r_cartesian_mesh_obj->n_y, &y_mesh);
 
-    double R_X_data[x_mesh.rows*y_mesh.rows];
-    double R_Y_data[x_mesh.rows*y_mesh.rows];
-    rd_mat_t R_X = rd_mat_init_no_shape(R_X_data);
-    rd_mat_t R_Y = rd_mat_init_no_shape(R_Y_data);
-    rd_meshgrid(x_mesh, y_mesh, &R_X, &R_Y);
-
-    MKL_INT in_msk_data[r_cartesian_mesh_obj->n_x * r_cartesian_mesh_obj->n_y];
-    ri_mat_t in_msk = ri_mat_init_no_shape(in_msk_data);
-    inpolygon_mesh(R_X, R_Y, boundary_X, boundary_Y, &in_msk);
-
+    rd_meshgrid(x_mesh, y_mesh, R_X, R_Y);
+    inpolygon_mesh(*R_X, *R_Y, boundary_X, boundary_Y, in_interior);
 }
 
 void r_cartesian_mesh_interpolate_patch(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, q_patch_t *q_patch, MKL_INT M) {
@@ -62,11 +58,53 @@ void r_cartesian_mesh_interpolate_patch(r_cartesian_mesh_obj_t *r_cartesian_mesh
     rd_mat_t bound_X = rd_mat_init_no_shape(bound_X_data);
     rd_mat_t bound_Y = rd_mat_init_no_shape(bound_Y_data);
 
-    q_patch_boundary_mesh_xy(q_patch, true, &bound_X, &bound_Y);
-    print_matrix(bound_X);
+    q_patch_boundary_mesh_xy(q_patch, false, &bound_X, &bound_Y);
+    
+    MKL_INT in_patch_data[r_cartesian_mesh_obj->n_x * r_cartesian_mesh_obj->n_y];
+    ri_mat_t in_patch = ri_mat_init_no_shape(in_patch_data);
+    MKL_INT n_in_patch = inpolygon_mesh(*(r_cartesian_mesh_obj->R_X), *(r_cartesian_mesh_obj->R_Y), bound_X, bound_Y, &in_patch);
+
+    MKL_INT total_in_interior = 0;
+    for (int i = 0; i < r_cartesian_mesh_obj->n_x * r_cartesian_mesh_obj->n_y; i++) {
+        in_patch_data[i] = in_patch_data[i] && !(r_cartesian_mesh_obj->in_interior->mat_data[i]);
+        if (r_cartesian_mesh_obj->in_interior->mat_data[i] && in_patch_data[i]) {
+            n_in_patch -= 1;
+        }
+    }
+
+    MKL_INT r_patch_idxs_data[n_in_patch];
+    ri_mat_t r_patch_idxs = ri_mat_init(r_patch_idxs_data, n_in_patch, 1);
+    MKL_INT curr_idx = 0;
+    for (int i = 0; i < r_cartesian_mesh_obj->n_x * r_cartesian_mesh_obj->n_y; i++) {
+        if (in_patch.mat_data[i]) {
+            r_patch_idxs.mat_data[curr_idx] = i;
+            curr_idx += 1;
+        }
+    }
+
+    MKL_INT n_patch_grid = q_patch_grid_num_el(q_patch);
+    double patch_X_data[n_patch_grid];
+    double patch_Y_data[n_patch_grid];
+    rd_mat_t patch_X = rd_mat_init_no_shape(patch_X_data);
+    rd_mat_t patch_Y = rd_mat_init_no_shape(patch_Y_data);
+    q_patch_xy_mesh(q_patch, &patch_X, &patch_Y);
+
+    MKL_INT floor_X_j[n_patch_grid];
+    MKL_INT ceil_X_j[n_patch_grid];
+    MKL_INT floor_Y_j[n_patch_grid];
+    MKL_INT ceil_Y_j[n_patch_grid];
+
+    for (int i = 0; i < n_patch_grid; i++) {
+        floor_X_j[i] = (MKL_INT) floor((patch_X.mat_data[i] - r_cartesian_mesh_obj->x_start)/r_cartesian_mesh_obj->h);
+        ceil_X_j[i] = (MKL_INT) ceil((patch_X.mat_data[i] - r_cartesian_mesh_obj->x_start)/r_cartesian_mesh_obj->h);
+        floor_Y_j[i] = (MKL_INT) floor((patch_Y.mat_data[i] - r_cartesian_mesh_obj->y_start)/r_cartesian_mesh_obj->h);
+        ceil_Y_j[i] = (MKL_INT) ceil((patch_Y.mat_data[i] - r_cartesian_mesh_obj->y_start)/r_cartesian_mesh_obj->h);
+    }
+
+    
 }
 
-void inpolygon_mesh(rd_mat_t R_X, rd_mat_t R_Y, rd_mat_t boundary_X, rd_mat_t boundary_Y, ri_mat_t *in_msk) {
+MKL_INT inpolygon_mesh(rd_mat_t R_X, rd_mat_t R_Y, rd_mat_t boundary_X, rd_mat_t boundary_Y, ri_mat_t *in_msk) {
     ri_mat_shape(in_msk, R_X.rows, R_X.columns);
     memset(in_msk->mat_data, 0, in_msk->rows*in_msk->columns*sizeof(MKL_INT));
 
@@ -151,10 +189,14 @@ void inpolygon_mesh(rd_mat_t R_X, rd_mat_t R_Y, rd_mat_t boundary_X, rd_mat_t bo
                 in_msk->mat_data[idx] = 0;
             } else if (in_msk->mat_data[idx] && in_interior){
                 in_interior = false;
+                n_points_interior += 1;
             }
             else if (in_interior) {
                 in_msk->mat_data[idx] = 1;
+                n_points_interior += 1;
             }
         }
     }
+
+    return n_points_interior;
 }
