@@ -41,6 +41,9 @@ void r_cartesian_mesh_init(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, double 
     r_cartesian_mesh_obj->R_Y = R_Y;
     r_cartesian_mesh_obj->in_interior = in_interior;
 
+    rd_mat_shape(f_R, r_cartesian_mesh_obj->n_y, r_cartesian_mesh_obj->n_x);
+    r_cartesian_mesh_obj->f_R = f_R;
+
     double x_mesh_data[r_cartesian_mesh_obj->n_x];
     double y_mesh_data[r_cartesian_mesh_obj->n_y];
     rd_mat_t x_mesh = rd_mat_init(x_mesh_data, r_cartesian_mesh_obj->n_x, 1);
@@ -64,7 +67,6 @@ void r_cartesian_mesh_interpolate_patch(r_cartesian_mesh_obj_t *r_cartesian_mesh
     ri_mat_t in_patch = ri_mat_init_no_shape(in_patch_data);
     MKL_INT n_in_patch = inpolygon_mesh(*(r_cartesian_mesh_obj->R_X), *(r_cartesian_mesh_obj->R_Y), bound_X, bound_Y, &in_patch);
 
-    MKL_INT total_in_interior = 0;
     for (int i = 0; i < r_cartesian_mesh_obj->n_x * r_cartesian_mesh_obj->n_y; i++) {
         in_patch_data[i] = in_patch_data[i] && !(r_cartesian_mesh_obj->in_interior->mat_data[i]);
         if (r_cartesian_mesh_obj->in_interior->mat_data[i] && in_patch_data[i]) {
@@ -78,16 +80,23 @@ void r_cartesian_mesh_interpolate_patch(r_cartesian_mesh_obj_t *r_cartesian_mesh
     for (int i = 0; i < r_cartesian_mesh_obj->n_x * r_cartesian_mesh_obj->n_y; i++) {
         if (in_patch.mat_data[i]) {
             r_patch_idxs.mat_data[curr_idx] = i;
+            in_patch.mat_data[i] = curr_idx+1;
             curr_idx += 1;
         }
     }
 
     MKL_INT n_patch_grid = q_patch_grid_num_el(q_patch);
+    double patch_XI_data[n_patch_grid];
+    double patch_ETA_data[n_patch_grid];
+    rd_mat_t patch_XI = rd_mat_init_no_shape(patch_XI_data);
+    rd_mat_t patch_ETA = rd_mat_init_no_shape(patch_ETA_data);
+    q_patch_xi_eta_mesh(q_patch, &patch_XI, &patch_ETA);
+
     double patch_X_data[n_patch_grid];
     double patch_Y_data[n_patch_grid];
     rd_mat_t patch_X = rd_mat_init_no_shape(patch_X_data);
     rd_mat_t patch_Y = rd_mat_init_no_shape(patch_Y_data);
-    q_patch_xy_mesh(q_patch, &patch_X, &patch_Y);
+    q_patch_convert_to_XY(q_patch, patch_XI, patch_ETA, &patch_X, &patch_Y);
 
     MKL_INT floor_X_j[n_patch_grid];
     MKL_INT ceil_X_j[n_patch_grid];
@@ -101,7 +110,67 @@ void r_cartesian_mesh_interpolate_patch(r_cartesian_mesh_obj_t *r_cartesian_mesh
         ceil_Y_j[i] = (MKL_INT) ceil((patch_Y.mat_data[i] - r_cartesian_mesh_obj->y_start)/r_cartesian_mesh_obj->h);
     }
 
-    
+    double P_xi[n_in_patch];
+    double P_eta[n_in_patch];
+
+    for (int i = 0; i < n_in_patch; i++) {
+        P_xi[i] = NAN;
+        P_eta[i] = NAN;
+    }
+
+    for (int i = 0; i < n_patch_grid; i++) {
+        double neighbors_X[4] = {floor_X_j[i], floor_X_j[i], ceil_X_j[i], ceil_X_j[i]};
+        double neighbors_Y[4] = {floor_Y_j[i], ceil_Y_j[i], floor_Y_j[i], ceil_Y_j[i]};
+
+        for (int j = 0; j < 4; j++) {
+            double neighbor_X = neighbors_X[j];
+            double neighbor_Y = neighbors_Y[j];
+
+            if (neighbor_X > r_cartesian_mesh_obj->n_x-1 || neighbor_X < 0 || neighbor_Y > r_cartesian_mesh_obj->n_y-1 || neighbor_Y < 0) {
+                continue;
+            }
+            MKL_INT patch_idx = sub2ind(r_cartesian_mesh_obj->n_y, r_cartesian_mesh_obj->n_x, (sub_t) {neighbor_Y, neighbor_X});
+            
+            if(in_patch.mat_data[patch_idx] != 0 && isnan(P_xi[in_patch.mat_data[patch_idx]-1])) {
+                double neighbor_X_coord = neighbor_X*r_cartesian_mesh_obj->h+r_cartesian_mesh_obj->x_start;
+                double neighbor_Y_coord = neighbor_Y*r_cartesian_mesh_obj->h+r_cartesian_mesh_obj->y_start;
+                rd_mat_t initial_guess_xi = rd_mat_init(patch_XI_data+i, 1, 1);
+                rd_mat_t initial_guess_eta = rd_mat_init(patch_ETA_data+i, 1, 1);
+                inverse_M_p_return_type_t xi_eta = q_patch_inverse_M_p(q_patch, neighbor_X_coord, neighbor_Y_coord, &initial_guess_xi, &initial_guess_eta);
+
+                if (xi_eta.converged) {
+                    P_xi[in_patch.mat_data[patch_idx]-1] = xi_eta.xi;
+                    P_eta[in_patch.mat_data[patch_idx]-1] = xi_eta.eta;
+                }
+                else {
+                    printf("Nonconvergence in interpolation!!!");
+                }
+            }
+        }
+    }
+
+    MKL_INT nan_set_count = 0;
+    for (int i = 0; i < n_in_patch; i++) {
+        if (isnan(P_xi[i])) {
+            nan_set_count += 1;
+        }
+    }
+
+    printf("%d\n", nan_set_count);
+    double f_R_patch[n_in_patch];
+    for (int i = 0; i < n_in_patch; i++) {
+        double xi_point = P_xi[in_patch.mat_data[r_patch_idxs.mat_data[i]]-1];
+        double eta_point = P_eta[in_patch.mat_data[r_patch_idxs.mat_data[i]]-1];
+
+        locally_compute_return_type_t f_locally_compute = q_patch_locally_compute(q_patch, xi_point, eta_point, M);
+        if(f_locally_compute.in_range) {
+            f_R_patch[i] = f_locally_compute.f_xy;
+        }
+    }
+
+    for (int i = 0; i < n_in_patch; i++) {
+        r_cartesian_mesh_obj->f_R->mat_data[r_patch_idxs.mat_data[i]] += f_R_patch[i];
+    }
 }
 
 MKL_INT inpolygon_mesh(rd_mat_t R_X, rd_mat_t R_Y, rd_mat_t boundary_X, rd_mat_t boundary_Y, ri_mat_t *in_msk) {

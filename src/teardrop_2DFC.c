@@ -7,6 +7,7 @@
 #include "q_patch_lib.h"
 #include "fc_lib.h"
 #include "r_cartesian_mesh_lib.h"
+#include "time.h"
 
 double f(double x, double y) {
     return 4+(1+pow(x, 2) + pow(y, 2))*(sin(2.5*M_PI*x-0.5)+cos(2*M_PI*y-0.5));
@@ -37,6 +38,8 @@ double l_2_dprime(double theta) {
 }
 
 int main() {
+    clock_t start, end;
+    start = clock();
     double h = 0.005;
     //reading continuation matrices
     MKL_INT d = 4;
@@ -103,10 +106,13 @@ int main() {
     double R_X_data[n_cartesian_mesh];
     double R_Y_data[n_cartesian_mesh];
     MKL_INT in_interior_data[n_cartesian_mesh];
+    double f_R_data[n_cartesian_mesh];
     rd_mat_t R_X = rd_mat_init_no_shape(R_X_data);
     rd_mat_t R_Y = rd_mat_init_no_shape(R_Y_data);
     ri_mat_t in_interior = ri_mat_init_no_shape(in_interior_data);
-    r_cartesian_mesh_init(&r_cartesian_mesh_obj, x_min-h, x_max+h, y_min-h, y_max+h, h, boundary_X, boundary_Y, &R_X, &R_Y, &in_interior, NULL);
+    rd_mat_t f_R = rd_mat_init_no_shape(f_R_data);
+    r_cartesian_mesh_init(&r_cartesian_mesh_obj, x_min-h, x_max+h, y_min-h, y_max+h, h, boundary_X, boundary_Y, &R_X, &R_Y, &in_interior, &f_R);
+    r_cartesian_mesh_interpolate_patch(&r_cartesian_mesh_obj, fc_patches, d+3);
 
     FILE *fp;
     fp = freopen("output.txt", "w", stdout);
@@ -115,10 +121,14 @@ int main() {
         perror("Error opening file");
         return 1;
     }
-    r_cartesian_mesh_interpolate_patch(&r_cartesian_mesh_obj, fc_patches, d+3);
+
+    print_matrix(f_R);
 
     fclose(fp);
     freopen("/dev/tty", "w", stdout);
 
+    end = clock();
+
+    printf("Time: %f\n", ((double) (end-start))/CLOCKS_PER_SEC);
     return 0;
 }
