@@ -25,19 +25,16 @@ void s_patch_init(s_patch_t *s_patch, M_p_general_t M_p_general, J_general_t J_g
 }
 
 MKL_INT s_patch_FC_num_el(s_patch_t *s_patch, MKL_INT C, MKL_INT n_r) {
-    return (n_r*C+1)*(s_patch->Q.n_xi+1);
+    return (n_r*C+1)*(s_patch->Q.n_xi);
 }
 
-void s_patch_FC_init(s_patch_t *s_patch, MKL_INT C, MKL_INT n_r, rd_mat_t* f_FC, q_patch_t *s_patch_FC) {
-    q_patch_t *sq_patch = (q_patch_t*) s_patch;
-    f_FC->columns = sq_patch->n_xi+1;
-    f_FC->rows = n_r*C+1;
-    q_patch_init(s_patch_FC, sq_patch->M_p, sq_patch->J, sq_patch->eps_xi_eta, sq_patch->eps_xy, sq_patch->n_xi, C*n_r, sq_patch->xi_start, sq_patch->xi_end, sq_patch->eta_start-C*sq_patch->h_eta, sq_patch->eta_start, f_FC);
-}
+MKL_INT s_patch_FC(s_patch_t *s_patch, MKL_INT C, MKL_INT n_r, MKL_INT d, rd_mat_t A, rd_mat_t Q, q_patch_t* s_patch_FC, rd_mat_t *f_FC, double *data_stack) {
+    f_FC->mat_data = data_stack;
+    q_patch_t *sq_patch = &(s_patch->Q);
+    q_patch_init(s_patch_FC, sq_patch->M_p, sq_patch->J, sq_patch->eps_xi_eta, sq_patch->eps_xy, sq_patch->n_xi, C*n_r+1, sq_patch->xi_start, sq_patch->xi_end, sq_patch->eta_start-C*sq_patch->h_eta, sq_patch->eta_start, f_FC);
 
-void s_patch_FC(s_patch_t *s_patch, MKL_INT d, rd_mat_t A, rd_mat_t Q, rd_mat_t* phi_normalization, s_patch_t* s_patch_FC) {
-    if (phi_normalization == NULL) {
-        fcont_gram_blend_S(*(s_patch->Q.f_XY), d, A, Q, s_patch_FC->Q.f_XY);
-    }
+    fcont_gram_blend_S(*(s_patch->Q.f_XY), d, A, Q, s_patch_FC->f_XY);
+
+    return s_patch_FC_num_el(s_patch, C, n_r);
 }
 

@@ -29,8 +29,6 @@ void s_patch_init(s_patch_t *s_patch, M_p_general_t M_p_general, J_general_t J_g
 
 MKL_INT s_patch_FC_num_el(s_patch_t *s_patch, MKL_INT C, MKL_INT n_r);
 
-void s_patch_FC_init(s_patch_t *s_patch, MKL_INT C, MKL_INT n_r, rd_mat_t* f_FC, q_patch_t *s_patch_FC);
-
-void s_patch_FC(s_patch_t *s_patch, MKL_INT d, rd_mat_t A, rd_mat_t Q, rd_mat_t* phi_normalization, s_patch_t* s_patch_FC);
+MKL_INT s_patch_FC(s_patch_t *s_patch, MKL_INT C, MKL_INT n_r, MKL_INT d, rd_mat_t A, rd_mat_t Q, q_patch_t* s_patch_FC, rd_mat_t *f_FC, double *data_stack);
 
 #endif

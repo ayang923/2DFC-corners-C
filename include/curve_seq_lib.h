@@ -100,5 +100,8 @@ MKL_INT curve_seq_num_f_mats(curve_seq_t *curve_seq);
 
 MKL_INT curve_seq_num_f_mat_points(curve_seq_t *curve_seq, MKL_INT d);
 
+MKL_INT curve_seq_num_FC_mats(curve_seq_t *curve_seq);
+
+MKL_INT curve_seq_num_FC_points(curve_seq_t *curve_seq, s_patch_t *s_patches, c_patch_t *c_patches, MKL_INT C, MKL_INT n_r, MKL_INT d);
 
 #endif

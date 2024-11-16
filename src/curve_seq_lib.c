@@ -6,6 +6,7 @@
 #include "curve_seq_lib.h"
 #include "num_linalg_lib.h"
 #include "s_patch_lib.h"
+#include "c_patch_lib.h"
 
 void M_p_S_general_handle(rd_mat_t xi, rd_mat_t eta, double H, rd_mat_t *x, rd_mat_t *y, void* extra_param) {
     rd_mat_shape(x, xi.rows, xi.columns);
@@ -306,11 +307,31 @@ void curve_seq_construct_patches(curve_seq_t *curve_seq, s_patch_t *s_patches, c
         curr_c_patch += 1;
         curr_s_patch += 1;
     }
-    if (curr_c_patch->c_patch_type == C1) {
+    if (prev_c_patch->c_patch_type == C1) {
         c1_patch_apply_w_W(prev_c_patch, prev_s_patch);
         c1_patch_apply_w_L(prev_c_patch, s_patches);
     } else {
         c2_patch_apply_w_W(prev_c_patch, prev_s_patch);
         c2_patch_apply_w_L(prev_c_patch, s_patches);
     }
+}
+
+MKL_INT curve_seq_num_FC_mats(curve_seq_t *curve_seq) {
+    return 4*curve_seq->n_curves;
+}
+
+MKL_INT curve_seq_num_FC_points(curve_seq_t *curve_seq, s_patch_t *s_patches, c_patch_t *c_patches, MKL_INT C, MKL_INT n_r, MKL_INT d) {
+    MKL_INT total_points = 0;
+    for (int i = 0; i < curve_seq->n_curves; i++) {
+        total_points += s_patch_FC_num_el(s_patches+i, C, n_r);
+        total_points += c_patch_FC_corner_num_el(C, n_r);
+        
+        if (c_patches[i].c_patch_type == C2) {
+            total_points += c2_patch_FC_W_num_el(c_patches+i, C, n_r) + c2_patch_FC_L_num_el(c_patches+i, C, n_r, d);
+        } else {
+        }
+        
+    }
+
+    return total_points;
 }

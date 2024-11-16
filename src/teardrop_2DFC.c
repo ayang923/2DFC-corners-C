@@ -5,6 +5,7 @@
 #include "curve_seq_lib.h"
 #include "s_patch_lib.h"
 #include "q_patch_lib.h"
+#include "fc_lib.h"
 
 double f(double x, double y) {
     return 4+(1+pow(x, 2) + pow(y, 2))*(sin(2.5*M_PI*x-0.5)+cos(2*M_PI*y-0.5));
@@ -35,7 +36,17 @@ double l_2_dprime(double theta) {
 }
 
 int main() {
-    MKL_INT d = 7;
+    
+    //reading continuation matrices
+    MKL_INT d = 4;
+    MKL_INT C = 27;
+    MKL_INT n_r = 6;
+    double A_data[fc_A_numel(d, C, n_r)];
+    double Q_data[fc_Q_numel(d)];
+    rd_mat_t A = rd_mat_init_no_shape(A_data);
+    rd_mat_t Q = rd_mat_init_no_shape(Q_data);
+
+    read_fc_matrix(d, C, n_r, "fc_data/A_d4_C27_r6.txt", "fc_data/Q_d4_C27_r6.txt", &A, &Q);
 
     curve_seq_t curve_seq;
     curve_seq_init(&curve_seq);
@@ -51,6 +62,28 @@ int main() {
 
     curve_seq_construct_patches(&curve_seq, s_patches, c_patches, f_arrays, f_points, f, d, 1e-13, 1e-13);
 
+    MKL_INT num_fc_patches = curve_seq_num_FC_mats(&curve_seq);
+    q_patch_t fc_patches[num_fc_patches];
+
+    rd_mat_t fc_mats[num_fc_patches];
+    double fc_points[curve_seq_num_FC_points(&curve_seq, s_patches, c_patches, C, n_r, d)];
+
+
+    q_patch_t *curr_q_patch = fc_patches;
+    rd_mat_t *curr_fc_mat = fc_mats;
+    double *curr_fc_point = fc_points;
+    for (int i = 0; i < curve_seq.n_curves; i++) {
+        curr_fc_point += s_patch_FC(s_patches+i, C, n_r,d, A, Q, curr_q_patch, curr_fc_mat, curr_fc_point);
+        curr_q_patch += 1;
+        curr_fc_mat += 1;
+
+        if(c_patches[i].c_patch_type == C2) {
+            curr_fc_point += c2_patch_FC(c_patches+i, C, n_r, d, A, Q, curr_q_patch, curr_q_patch+1, curr_q_patch+2, curr_fc_mat, curr_fc_mat+1, curr_fc_mat+2, curr_fc_point);
+        }
+        curr_q_patch += 3;
+        curr_fc_mat += 3;
+    }
+
     FILE *fp;
     fp = freopen("output.txt", "w", stdout);
 
@@ -58,10 +91,7 @@ int main() {
         perror("Error opening file");
         return 1;
     }
-
-    print_matrix(*(c_patches[0].L.f_XY));
-
-    // print_matrix(*(s_patches[0].Q.f_XY));
+    print_matrix(*(fc_patches[1].f_XY));
 
     fclose(fp);
     freopen("/dev/tty", "w", stdout);

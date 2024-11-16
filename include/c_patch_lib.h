@@ -32,4 +32,12 @@ void c1_patch_apply_w_L(c_patch_t *c_patch, s_patch_t *window_patch_L);
 void c2_patch_apply_w_W(c_patch_t *c_patch, s_patch_t *window_patch_W);
 
 void c2_patch_apply_w_L(c_patch_t *c_patch, s_patch_t *window_patch_L);
+
+MKL_INT c2_patch_FC_W_num_el(c_patch_t *c_patch, MKL_INT C, MKL_INT n_r);
+
+MKL_INT c2_patch_FC_L_num_el(c_patch_t *c_patch, MKL_INT C, MKL_INT n_r, MKL_INT d);
+
+MKL_INT c_patch_FC_corner_num_el(MKL_INT C, MKL_INT n_r);
+
+MKL_INT c2_patch_FC(c_patch_t *c_patch, MKL_INT C, MKL_INT n_r, MKL_INT d, rd_mat_t A, rd_mat_t Q, q_patch_t* c2_fcont_patch_L, q_patch_t *c2_fcont_patch_W, q_patch_t *c2_fcont_patch_corner, rd_mat_t *f_L, rd_mat_t *f_W, rd_mat_t *f_corner, double *data_stack);
 #endif
