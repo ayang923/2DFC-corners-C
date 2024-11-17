@@ -329,6 +329,7 @@ MKL_INT curve_seq_num_FC_points(curve_seq_t *curve_seq, s_patch_t *s_patches, c_
         if (c_patches[i].c_patch_type == C2) {
             total_points += c2_patch_FC_W_num_el(c_patches+i, C, n_r) + c2_patch_FC_L_num_el(c_patches+i, C, n_r, d);
         } else {
+            total_points += c1_patch_FC_W_num_el(c_patches+i, C, n_r) + c1_patch_FC_L_num_el(c_patches+i, C, n_r, d);
         }
         
     }

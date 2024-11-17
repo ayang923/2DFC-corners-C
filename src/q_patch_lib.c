@@ -9,15 +9,6 @@
 
 void w_1D(rd_mat_t x, rd_mat_t *w_1D_vals);
 
-void shift_idx_mesh(ri_mat_t *mat, int min_bound, int max_bound) {
-    if (mat->mat_data[0] < min_bound) {
-        ri_range(min_bound, 1, min_bound+mat->rows-1, mat);
-    }
-    if (mat->mat_data[mat->rows-1] > max_bound) {
-        ri_range(max_bound-mat->rows+1, 1, max_bound, mat);
-    }
-}
-
 MKL_INT q_patch_grid_num_el(q_patch_t *q_patch) {
     return (q_patch->n_xi)*(q_patch->n_eta);
 }

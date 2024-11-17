@@ -73,6 +73,8 @@ void rd_linspace(double start, double end, MKL_INT n, rd_mat_t *mat_addr);
 
 void rd_meshgrid(rd_mat_t x, rd_mat_t y, rd_mat_t *X, rd_mat_t *Y);
 
+void shift_idx_mesh(ri_mat_t *mat, int min_bound, int max_bound);
+
 /**
  * @brief Wrapper function to create rd_mat_t object
  */

@@ -55,6 +55,9 @@ void FC2D(scalar_func_2D_t f, double h, curve_seq_t curve_seq, double eps_xi_eta
         if(c_patches[i].c_patch_type == C2) {
             curr_fc_point += c2_patch_FC(c_patches+i, C, n_r, d, A, Q, curr_q_patch, curr_q_patch+1, curr_q_patch+2, curr_fc_mat, curr_fc_mat+1, curr_fc_mat+2, curr_fc_point);
         }
+        else {
+            curr_fc_point += c1_patch_FC(c_patches+i, C, n_r, d, A, Q, M, curr_q_patch, curr_q_patch+1, curr_q_patch+2, curr_fc_mat, curr_fc_mat+1, curr_fc_mat+2, curr_fc_point);
+        }
         curr_q_patch += 3;
         curr_fc_mat += 3;
 
@@ -98,7 +101,7 @@ void FC2D(scalar_func_2D_t f, double h, curve_seq_t curve_seq, double eps_xi_eta
     end = clock();
     printf("Time: %f\n", ((double) (end-start))/CLOCKS_PER_SEC);
 
-        FILE *fp;
+    FILE *fp;
     fp = freopen("output.txt", "w", stdout);
 
     if (fp == NULL) {

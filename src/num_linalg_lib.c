@@ -26,6 +26,15 @@ void rd_linspace(double start, double end, MKL_INT n, rd_mat_t *mat_addr) {
     }
 }
 
+void shift_idx_mesh(ri_mat_t *mat, int min_bound, int max_bound) {
+    if (mat->mat_data[0] < min_bound) {
+        ri_range(min_bound, 1, min_bound+mat->rows-1, mat);
+    }
+    if (mat->mat_data[mat->rows-1] > max_bound) {
+        ri_range(max_bound-mat->rows+1, 1, max_bound, mat);
+    }
+}
+
 void rd_meshgrid(rd_mat_t x, rd_mat_t y, rd_mat_t *X, rd_mat_t *Y) {
     // assumes x and y are column vectors
 
