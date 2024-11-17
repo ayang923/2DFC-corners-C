@@ -8,9 +8,6 @@
 #include "hashmap.h"
 #include "q_patch_lib.h"
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-
 double round_end_bound(double start_bound, double end_bound, double h) {
     return ceil((end_bound-start_bound)/h)*h + start_bound;
 }
@@ -68,10 +65,10 @@ void r_cartesian_mesh_interpolate_patch(r_cartesian_mesh_obj_t *r_cartesian_mesh
     MKL_INT n_in_patch = inpolygon_mesh(*(r_cartesian_mesh_obj->R_X), *(r_cartesian_mesh_obj->R_Y), bound_X, bound_Y, &in_patch);
 
     for (int i = 0; i < r_cartesian_mesh_obj->n_x * r_cartesian_mesh_obj->n_y; i++) {
-        in_patch_data[i] = in_patch_data[i] && !(r_cartesian_mesh_obj->in_interior->mat_data[i]);
         if (r_cartesian_mesh_obj->in_interior->mat_data[i] && in_patch_data[i]) {
             n_in_patch -= 1;
         }
+        in_patch_data[i] = in_patch_data[i] && !(r_cartesian_mesh_obj->in_interior->mat_data[i]);        
     }
 
     MKL_INT r_patch_idxs_data[n_in_patch];
@@ -149,14 +146,54 @@ void r_cartesian_mesh_interpolate_patch(r_cartesian_mesh_obj_t *r_cartesian_mesh
         }
     }
 
-    MKL_INT nan_set_count = 0;
-    for (int i = 0; i < n_in_patch; i++) {
-        if (isnan(P_xi[i])) {
-            nan_set_count += 1;
+    MKL_INT nan_count;
+    bool first_iter = false;
+    while (true) {
+        if (!first_iter && nan_count == 0) {
+            break;
         }
+        nan_count = 0;
+        for (int i = 0; i < n_in_patch; i++) {
+            if (isnan(P_xi[i])) {
+                bool is_touched = false;
+                sub_t idx = ind2sub(r_cartesian_mesh_obj->n_y, r_cartesian_mesh_obj->n_x, r_patch_idxs_data[i]);
+
+                MKL_INT neighbor_shift_x[8] = {1,-1, 0, 0, 1, 1, -1, -1};
+                MKL_INT neighbor_shift_y[8] = {0, 0, -1, 1, 1, -1, 1, -1};
+                for (int j = 0; j < 8; j++) {
+                    MKL_INT neighbor_i = idx.i + neighbor_shift_y[j];
+                    MKL_INT neighbor_j = idx.j + neighbor_shift_x[j];
+                    
+                    if (neighbor_j > r_cartesian_mesh_obj->n_x-1 || neighbor_j < 0 || neighbor_i > r_cartesian_mesh_obj->n_y-1 || neighbor_i < 0) {
+                        continue;
+                    }
+
+                    MKL_INT neighbor = sub2ind(r_cartesian_mesh_obj->n_y, r_cartesian_mesh_obj->n_x, (sub_t) {neighbor_i, neighbor_j});
+                    if (in_patch.mat_data[neighbor] != 0 && !isnan(P_xi[in_patch.mat_data[neighbor]-1])) {
+                        double idx_x_coord = idx.j*r_cartesian_mesh_obj->h + r_cartesian_mesh_obj->x_start;
+                        double idx_y_coord = idx.i*r_cartesian_mesh_obj->h + r_cartesian_mesh_obj->y_start;
+                        rd_mat_t initial_guess_xi = rd_mat_init(P_xi + in_patch.mat_data[neighbor] - 1, 1, 1);
+                        rd_mat_t initial_guess_eta = rd_mat_init(P_eta + in_patch.mat_data[neighbor] - 1, 1, 1);
+                        inverse_M_p_return_type_t xi_eta = q_patch_inverse_M_p(q_patch, idx_x_coord, idx_y_coord, &initial_guess_xi, &initial_guess_eta);
+
+                        if (xi_eta.converged) {
+                            P_xi[i] = xi_eta.xi;
+                            P_eta[i] = xi_eta.eta;
+                            is_touched = true;
+                        }
+                        else {
+                            printf("Nonconvergence in interpolation!!!");
+                        }
+                    }
+                }
+                if (!is_touched) {
+                    nan_count += 1;
+                }
+            }
+        }
+        first_iter = false;
     }
 
-    printf("%d\n", nan_set_count);
     double f_R_patch[n_in_patch];
     for (int i = 0; i < n_in_patch; i++) {
         double xi_point = P_xi[in_patch.mat_data[r_patch_idxs.mat_data[i]]-1];

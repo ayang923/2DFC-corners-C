@@ -4,6 +4,9 @@
 #include <mkl.h>
 #include <stdlib.h>
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
 typedef double (*scalar_func_t) (double theta);
 
 typedef double (*scalar_func_2D_t) (double x, double y);

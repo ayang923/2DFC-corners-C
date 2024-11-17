@@ -18,6 +18,12 @@ void shift_idx_mesh(ri_mat_t *mat, int min_bound, int max_bound) {
     }
 }
 
+MKL_INT q_patch_grid_num_el(q_patch_t *q_patch) {
+    return (q_patch->n_xi)*(q_patch->n_eta);
+}
+
+void q_patch_xy_mesh(q_patch_t *q_patch, rd_mat_t *X_vals, rd_mat_t *Y_vals);
+
 void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT n_eta, double xi_start, double xi_end, double eta_start, double eta_end, rd_mat_t *f_XY) {
     q_patch->M_p = M_p;
     q_patch->J = J;
@@ -38,10 +44,25 @@ void q_patch_init(q_patch_t *q_patch, M_p_t M_p, J_t J, double eps_xi_eta, doubl
     rd_mat_shape(f_XY, n_eta, n_xi);
 
     q_patch->w_1D = (w_1D_t) w_1D;
-}
 
-MKL_INT q_patch_grid_num_el(q_patch_t *q_patch) {
-    return (q_patch->n_xi)*(q_patch->n_eta);
+    MKL_INT n_q_patch_grid_el = q_patch_grid_num_el(q_patch);
+    double X_data[n_q_patch_grid_el];
+    double Y_data[n_q_patch_grid_el];
+    rd_mat_t X = rd_mat_init_no_shape(X_data);
+    rd_mat_t Y = rd_mat_init_no_shape(Y_data);
+    q_patch_xy_mesh(q_patch, &X, &Y);
+
+    q_patch->x_min = X.mat_data[0];
+    q_patch->y_min = Y.mat_data[0];
+    q_patch->x_max = X.mat_data[0];
+    q_patch->y_max = Y.mat_data[0];
+
+    for (int i = 0; i < n_q_patch_grid_el; i++) {
+        q_patch->x_min = MIN(q_patch->x_min, X_data[i]);
+        q_patch->y_min = MIN(q_patch->y_min, Y_data[i]);
+        q_patch->x_max = MAX(q_patch->x_max, X_data[i]);
+        q_patch->y_max = MAX(q_patch->y_max, Y_data[i]);
+    }
 }
 
 void q_patch_evaluate_M_p(q_patch_t *q_patch, rd_mat_t xi, rd_mat_t eta, rd_mat_t *x, rd_mat_t *y) {
@@ -792,7 +813,7 @@ void apply_w(q_patch_t *main_patch, rd_mat_t w_unnormalized, q_patch_t *window_p
                 initial_guesses_xi = &window_patch_xi_mat;
                 initial_guesses_eta = &window_patch_eta_mat;
             } else {
-                printf("Nonconvergence in computing C norm!!!");
+                printf("Nonconvergence in computing C norm!!!\n");
             }
         }
 

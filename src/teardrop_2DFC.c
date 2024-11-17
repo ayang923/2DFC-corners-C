@@ -56,7 +56,7 @@ int main() {
     curve_seq_init(&curve_seq);
 
     curve_t curve_1;
-    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, 0, 1.0/10.0, 1.0/10.0, 0, 0, h);
+    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, 0, 1.0/10.0, 1.0/10.0, 0, 0, h*n_r*2);
 
     c_patch_t c_patches[curve_seq.n_curves];
     s_patch_t s_patches[curve_seq.n_curves];
@@ -73,6 +73,11 @@ int main() {
     double fc_points[curve_seq_num_FC_points(&curve_seq, s_patches, c_patches, C, n_r, d)];
 
 
+    double x_min = curve_seq.first_curve->l_1(0);
+    double x_max = curve_seq.first_curve->l_1(0);
+    double y_min = curve_seq.first_curve->l_2(0);
+    double y_max = curve_seq.first_curve->l_2(0);
+
     q_patch_t *curr_q_patch = fc_patches;
     rd_mat_t *curr_fc_mat = fc_mats;
     double *curr_fc_point = fc_points;
@@ -86,7 +91,17 @@ int main() {
         }
         curr_q_patch += 3;
         curr_fc_mat += 3;
+
+        for (int j = 1; j <= 4; j++) {
+            q_patch_t *prev_q_patch = curr_q_patch-j;
+            x_min = MIN(x_min, prev_q_patch->x_min);
+            x_max = MAX(x_max, prev_q_patch->x_max);
+            y_min = MIN(y_min, prev_q_patch->y_min);
+            y_max = MAX(y_max, prev_q_patch->y_max);
+        }
     }
+
+    printf("%f, %f, %f, %f\n", x_min, x_max, y_min, y_max);
 
     double boundary_X_data[curve_seq_boundary_mesh_num_el(&curve_seq, n_r)];
     double boundary_Y_data[curve_seq_boundary_mesh_num_el(&curve_seq, n_r)];
@@ -94,11 +109,6 @@ int main() {
     rd_mat_t boundary_Y = rd_mat_init_no_shape(boundary_Y_data);
 
     curve_seq_construct_boundary_mesh(&curve_seq, n_r, &boundary_X, &boundary_Y);
-
-    double x_min = -0.277884193264275;
-    double x_max = 2.135000000000000;
-    double y_min = -1.135000000000000;
-    double y_max = 1.135000000000000;
 
     r_cartesian_mesh_obj_t r_cartesian_mesh_obj;
 
@@ -122,7 +132,6 @@ int main() {
         return 1;
     }
 
-    print_matrix(f_R);
 
     fclose(fp);
     freopen("/dev/tty", "w", stdout);

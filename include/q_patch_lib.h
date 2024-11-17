@@ -69,6 +69,11 @@ typedef struct q_patch {
 
     double eps_xi_eta;
     double eps_xy;
+
+    double x_min;
+    double y_min;
+    double x_max;
+    double y_max;
 } q_patch_t;
 
 /**
