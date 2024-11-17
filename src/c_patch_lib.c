@@ -111,7 +111,7 @@ MKL_INT c1_patch_FC(c_patch_t *c_patch, MKL_INT C, MKL_INT n_r, MKL_INT d, rd_ma
 
     q_patch_init(c1_fcont_patch_L, c_patch->L.M_p, c_patch->L.J, c_patch->L.eps_xi_eta, c_patch->L.eps_xy, C*n_r+1, c_patch->L.n_eta-(d-1), 0.5-C*c_patch->L.h_xi, 0.5, 0, 0.5, f_L);
     q_patch_init(c1_fcont_patch_W, c_patch->W.M_p, c_patch->W.J, c_patch->W.eps_xi_eta, c_patch->W.eps_xy, c_patch->W.n_xi-C, C*n_r+1, 0, 0.5-C*c_patch->W.h_xi, 0.5-C*c_patch->W.h_eta, 0.5, f_W);
-    q_patch_init(c1_fcont_patch_corner, c_patch->W.M_p, c_patch->W.J, c_patch->W.eps_xi_eta, c_patch->W.eps_xy, C*n_r+1, C*n_r+1, 0.5-C*c_patch->W.h_xi, 0.5, -C*c_patch->W.h_eta, 0.5, f_corner);
+    q_patch_init(c1_fcont_patch_corner, c_patch->W.M_p, c_patch->W.J, c_patch->W.eps_xi_eta, c_patch->W.eps_xy, C*n_r+1, C*n_r+1, 0.5-C*c_patch->W.h_xi, 0.5, 0.5-C*c_patch->W.h_eta, 0.5, f_corner);
 
     double L_f_XY_T_data[c_patch->L.n_xi * c_patch->L.n_eta];
     rd_mat_t L_f_XY_T = rd_mat_init(L_f_XY_T_data, c_patch->L.n_xi, c_patch->L.n_eta);

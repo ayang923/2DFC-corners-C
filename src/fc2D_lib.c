@@ -21,17 +21,6 @@ void FC2D(scalar_func_2D_t f, double h, curve_seq_t curve_seq, double eps_xi_eta
 
     curve_seq_construct_patches(&curve_seq, s_patches, c_patches, f_arrays, f_points, f, d, eps_xi_eta, eps_xy);
 
-    // q_patch_t q_patch = s_patches[1].Q;
-    // MKL_INT grid_num_el = q_patch_grid_num_el(&q_patch);
-    // double X_data[grid_num_el];
-    // double Y_data[grid_num_el];
-    // rd_mat_t X = rd_mat_init_no_shape(X_data);
-    // rd_mat_t Y = rd_mat_init_no_shape(Y_data);
-
-    // q_patch_xy_mesh(&q_patch, &X, &Y);
-
-
-
     MKL_INT num_fc_patches = curve_seq_num_FC_mats(&curve_seq);
     q_patch_t fc_patches[num_fc_patches];
 
