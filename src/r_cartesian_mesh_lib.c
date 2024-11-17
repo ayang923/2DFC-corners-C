@@ -38,6 +38,7 @@ void r_cartesian_mesh_init(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, double 
     r_cartesian_mesh_obj->in_interior = in_interior;
 
     rd_mat_shape(f_R, r_cartesian_mesh_obj->n_y, r_cartesian_mesh_obj->n_x);
+    memset(f_R->mat_data, 0, r_cartesian_mesh_obj->n_y*r_cartesian_mesh_obj->n_x*sizeof(double));
     r_cartesian_mesh_obj->f_R = f_R;
 
     double x_mesh_data[r_cartesian_mesh_obj->n_x];
@@ -206,6 +207,14 @@ void r_cartesian_mesh_interpolate_patch(r_cartesian_mesh_obj_t *r_cartesian_mesh
     
     for (int i = 0; i < n_in_patch; i++) {
         r_cartesian_mesh_obj->f_R->mat_data[r_patch_idxs.mat_data[i]] += f_R_patch[i];
+    }
+}
+
+void r_cartesian_mesh_fill_interior(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, scalar_func_2D_t f) {
+    for (int i = 0; i < r_cartesian_mesh_obj->n_x * r_cartesian_mesh_obj->n_y; i++) {
+        if (r_cartesian_mesh_obj->in_interior->mat_data[i]) {
+            r_cartesian_mesh_obj->f_R->mat_data[i] = f(r_cartesian_mesh_obj->R_X->mat_data[i], r_cartesian_mesh_obj->R_Y->mat_data[i]);
+        }
     }
 }
 

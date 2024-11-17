@@ -45,6 +45,9 @@ int main() {
     MKL_INT d = 4;
     MKL_INT C = 27;
     MKL_INT n_r = 6;
+
+    MKL_INT M = d+3;
+
     double A_data[fc_A_numel(d, C, n_r)];
     double Q_data[fc_Q_numel(d)];
     rd_mat_t A = rd_mat_init_no_shape(A_data);
@@ -56,7 +59,7 @@ int main() {
     curve_seq_init(&curve_seq);
 
     curve_t curve_1;
-    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, 0, 1.0/10.0, 1.0/10.0, 0, 0, h*n_r*2);
+    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, 0, 1.0/10.0, 1.0/10.0, 0, 0, h);
 
     c_patch_t c_patches[curve_seq.n_curves];
     s_patch_t s_patches[curve_seq.n_curves];
@@ -122,7 +125,12 @@ int main() {
     ri_mat_t in_interior = ri_mat_init_no_shape(in_interior_data);
     rd_mat_t f_R = rd_mat_init_no_shape(f_R_data);
     r_cartesian_mesh_init(&r_cartesian_mesh_obj, x_min-h, x_max+h, y_min-h, y_max+h, h, boundary_X, boundary_Y, &R_X, &R_Y, &in_interior, &f_R);
-    r_cartesian_mesh_interpolate_patch(&r_cartesian_mesh_obj, fc_patches, d+3);
+
+    for (int i = 0; i < num_fc_patches; i++) {
+        r_cartesian_mesh_interpolate_patch(&r_cartesian_mesh_obj, fc_patches+i, M);
+    }
+
+    r_cartesian_mesh_fill_interior(&r_cartesian_mesh_obj, f);
 
     FILE *fp;
     fp = freopen("output.txt", "w", stdout);
