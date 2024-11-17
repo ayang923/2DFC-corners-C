@@ -132,6 +132,7 @@ int main() {
         return 1;
     }
 
+    print_matrix(f_R);
 
     fclose(fp);
     freopen("/dev/tty", "w", stdout);

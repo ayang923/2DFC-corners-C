@@ -5,7 +5,6 @@
 
 #include "r_cartesian_mesh_lib.h"
 #include "num_linalg_lib.h"
-#include "hashmap.h"
 #include "q_patch_lib.h"
 
 double round_end_bound(double start_bound, double end_bound, double h) {
@@ -147,7 +146,7 @@ void r_cartesian_mesh_interpolate_patch(r_cartesian_mesh_obj_t *r_cartesian_mesh
     }
 
     MKL_INT nan_count;
-    bool first_iter = false;
+    bool first_iter = true;
     while (true) {
         if (!first_iter && nan_count == 0) {
             break;
@@ -204,7 +203,7 @@ void r_cartesian_mesh_interpolate_patch(r_cartesian_mesh_obj_t *r_cartesian_mesh
             f_R_patch[i] = f_locally_compute.f_xy;
         }
     }
-
+    
     for (int i = 0; i < n_in_patch; i++) {
         r_cartesian_mesh_obj->f_R->mat_data[r_patch_idxs.mat_data[i]] += f_R_patch[i];
     }
