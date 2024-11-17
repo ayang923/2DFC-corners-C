@@ -367,5 +367,6 @@ void curve_seq_construct_boundary_mesh(curve_seq_t *curve_seq, MKL_INT n_r, rd_m
         }
 
         curr_idx += n_curve;
+        curr_curve = curr_curve->next_curve;
     }
 }

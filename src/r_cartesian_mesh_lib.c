@@ -49,6 +49,7 @@ void r_cartesian_mesh_init(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, double 
     rd_linspace(r_cartesian_mesh_obj->y_start, r_cartesian_mesh_obj->y_end, r_cartesian_mesh_obj->n_y, &y_mesh);
 
     rd_meshgrid(x_mesh, y_mesh, R_X, R_Y);
+
     inpolygon_mesh(*R_X, *R_Y, boundary_X, boundary_Y, in_interior);
 }
 
@@ -256,7 +257,7 @@ MKL_INT inpolygon_mesh(rd_mat_t R_X, rd_mat_t R_Y, rd_mat_t boundary_X, rd_mat_t
         }
 
         intersection_edges_msk[i] = floor(boundary_y_edge_1_j.mat_data[i]) != floor(boundary_y_edge_2_j.mat_data[i]);
-        if (floor(boundary_y_edge_1_j.mat_data[i]) != floor(boundary_y_edge_2_j.mat_data[i])) {
+        if (((MKL_INT) floor(boundary_y_edge_1_j.mat_data[i])) != ((MKL_INT) floor(boundary_y_edge_2_j.mat_data[i]))) {
             n_intersection_edges += 1;
         }
     }
@@ -288,10 +289,11 @@ MKL_INT inpolygon_mesh(rd_mat_t R_X, rd_mat_t R_Y, rd_mat_t boundary_X, rd_mat_t
             double intersection_y = intersection_mesh_y_j_data[j] * h_y + y_start;
             double intersection_x = x_edge_1 + (x_edge_2-x_edge_1)*(intersection_y-y_edge_1)/(y_edge_2-y_edge_1);
 
-            MKL_INT mesh_intersection_idx = sub2ind(in_msk->rows, in_msk->columns, (sub_t) {(MKL_INT) round((intersection_y-y_start)/h_y), floor((intersection_x-x_start)/h_x)});
+            MKL_INT mesh_intersection_idx = sub2ind(in_msk->rows, in_msk->columns, (sub_t) {(MKL_INT) round((intersection_y-y_start)/h_y), (MKL_INT) floor((intersection_x-x_start)/h_x)});
             in_msk->mat_data[mesh_intersection_idx] = !in_msk->mat_data[mesh_intersection_idx];
         }
     }
+
 
     MKL_INT n_points_interior = 0;
     for(int row_idx = 0; row_idx < in_msk->rows; row_idx++) {
