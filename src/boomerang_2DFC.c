@@ -65,7 +65,7 @@ int main() {
     curve_seq_init(&curve_seq);
 
     curve_t curve_1;
-    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, 0, 1.0/10.0, 1.0/10.0, 0, 0, 0.005);
+    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, 0, 1.0/10.0, 1.0/10.0, 0, 0, h);
 
     FC2D(f, h, curve_seq, 1e-14, 1e-14, d, C, n_r, A, Q, M);
 
