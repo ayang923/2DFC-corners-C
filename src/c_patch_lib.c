@@ -45,7 +45,7 @@ MKL_INT c1_patch_FC_W_num_el(c_patch_t *c_patch, MKL_INT C, MKL_INT n_r) {
 }
 
 MKL_INT c2_patch_FC_W_num_el(c_patch_t *c_patch, MKL_INT C, MKL_INT n_r) {
-    return (C*n_r+1) * (c_patch->W.n_xi-C);
+    return (C*n_r+1) * (c_patch->W.n_xi);
 }
 
 MKL_INT c1_patch_FC_L_num_el(c_patch_t *c_patch, MKL_INT C, MKL_INT n_r, MKL_INT d) {
