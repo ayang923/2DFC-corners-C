@@ -16,14 +16,12 @@ void s_J_wrapper_function(rd_mat_t v, rd_mat_t *J_vals, void* extra_param) {
 }
 
 void s_patch_init(s_patch_t *s_patch, M_p_general_t M_p_general, J_general_t J_general, double h, double eps_xi_eta, double eps_xy, MKL_INT n_xi, MKL_INT d, rd_mat_t *f_XY) {    
-    double h_eta = 1.0/(d-1.0);
-    
     s_patch->h = h;
-    s_patch->H = h / h_eta;
+    s_patch->H = 1;
     s_patch->M_p_general = M_p_general;
     s_patch->J_general = J_general;
 
-    q_patch_init(&(s_patch->Q), (M_p_t) {(M_p_handle_t) s_M_p_wrapper_function, (void*) s_patch}, (J_t) {(J_handle_t) s_J_wrapper_function, (void*) s_patch}, eps_xi_eta, eps_xy, n_xi, d, 0.0, 1.0, 0.0, 1.0, f_XY);
+    q_patch_init(&(s_patch->Q), (M_p_t) {(M_p_handle_t) s_M_p_wrapper_function, (void*) s_patch}, (J_t) {(J_handle_t) s_J_wrapper_function, (void*) s_patch}, eps_xi_eta, eps_xy, n_xi, d, 0.0, 1.0, 0.0, (d-1)*h, f_XY);
 }
 
 MKL_INT s_patch_FC_num_el(s_patch_t *s_patch, MKL_INT C, MKL_INT n_r) {
