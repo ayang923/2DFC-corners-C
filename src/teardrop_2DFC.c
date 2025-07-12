@@ -40,9 +40,9 @@ double l_2_dprime(double theta) {
 
 int main() {
 
-    double h = 0.005;
+    double h = 0.0025;
     //reading continuation matrices
-    MKL_INT d = 4;
+    MKL_INT d = 7;
     MKL_INT C = 27;
     MKL_INT n_r = 6;
 
@@ -53,7 +53,11 @@ int main() {
     rd_mat_t A = rd_mat_init_no_shape(A_data);
     rd_mat_t Q = rd_mat_init_no_shape(Q_data);
 
-    read_fc_matrix(d, C, n_r, "fc_data/A_d4_C27_r6.txt", "fc_data/Q_d4_C27_r6.txt", &A, &Q);
+    char A_fp[100];
+    char Q_fp[100];
+    sprintf(A_fp, "fc_data/A_d%d_C%d_r%d.txt", d, C, n_r);
+    sprintf(Q_fp, "fc_data/Q_d%d_C%d_r%d.txt", d, C, n_r);
+    read_fc_matrix(d, C, n_r, A_fp, Q_fp, &A, &Q);
 
     curve_seq_t curve_seq;
     curve_seq_init(&curve_seq);
