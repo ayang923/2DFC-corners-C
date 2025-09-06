@@ -1,6 +1,6 @@
 CC = icx
 CFLAGS = -Wall -Wextra -Iinclude/  -qmkl=sequential 
-# -g -fsanitize=undefined,address
+# -g -fsanitize=undefined,address -fno-omit-frame-pointer
 
 TARGETS = teardrop_2DFC
 LIBS = q_patch_lib num_linalg_lib s_patch_lib fc_lib curve_seq_lib c_patch_lib r_cartesian_mesh_lib fc2D_lib
@@ -23,6 +23,9 @@ $(BINS): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS)
 
 out/%.o: src/%.c
+	$(CC) $(CFLAGS) -c $^ -o $@
+
+out/%.o: examples/%.c
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 clean:
