@@ -204,6 +204,32 @@ void q_patch_boundary_mesh_xy(q_patch_t *q_patch, bool pad_boundary, rd_mat_t *b
     q_patch_convert_to_XY(q_patch, boundary_mesh_xi, boundary_mesh_eta, boundary_mesh_x, boundary_mesh_y);
 }
 
+void default_initial_guesses(q_patch_t *q_patch, MKL_INT N, rd_mat_t* initial_guesses_xi_mat, rd_mat_t* initial_guesses_eta_mat, double* initial_guesses_xi_data, double* initial_guesses_eta_data) {
+    MKL_INT N_segment = ceil(N/4.0);
+
+    double xi_mesh_data[N_segment+1];
+    double eta_mesh_data[N_segment+1];
+    rd_mat_t xi_mesh = rd_mat_init(xi_mesh_data, N_segment+1, 1);
+    rd_mat_t eta_mesh = rd_mat_init(eta_mesh_data, N_segment+1, 1);
+
+    rd_linspace(q_patch->xi_start, q_patch->xi_end, N_segment+1, &xi_mesh);
+    rd_linspace(q_patch->eta_start, q_patch->eta_end, N_segment+1, &eta_mesh);
+
+    cblas_dcopy(N_segment, xi_mesh_data, 1, initial_guesses_xi_data, 1);
+    cblas_dcopy(N_segment, xi_mesh_data, 1, initial_guesses_xi_data+N_segment, 1);
+    cblas_dcopy(N_segment, &(q_patch->xi_start), 0, initial_guesses_xi_data+2*N_segment, 1);
+    cblas_dcopy(N_segment, &(q_patch->xi_end), 0, initial_guesses_xi_data+3*N_segment, 1);
+
+    *initial_guesses_xi_mat = rd_mat_init(initial_guesses_xi_data, N_segment*4, 1);
+
+    cblas_dcopy(N_segment, &(q_patch->eta_start), 0, initial_guesses_eta_data, 1);
+    cblas_dcopy(N_segment, &(q_patch->eta_end), 0, initial_guesses_eta_data+N_segment, 1);
+    cblas_dcopy(N_segment, eta_mesh_data, 1, initial_guesses_eta_data+2*N_segment, 1);
+    cblas_dcopy(N_segment, eta_mesh_data, 1, initial_guesses_eta_data+3*N_segment, 1);
+
+    *initial_guesses_eta_mat = rd_mat_init(initial_guesses_eta_data, N_segment*4, 1);
+}
+
 
 inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, double y, rd_mat_t* initial_guesses_xi, rd_mat_t* initial_guesses_eta) {
     // global data for the case no initial guesses are given
@@ -215,27 +241,7 @@ inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, doub
     rd_mat_t initial_guesses_eta_mat;
 
     if (initial_guesses_xi == NULL || initial_guesses_eta == NULL) {        
-        double xi_mesh_data[N_segment+1];
-        double eta_mesh_data[N_segment+1];
-        rd_mat_t xi_mesh = rd_mat_init(xi_mesh_data, N_segment+1, 1);
-        rd_mat_t eta_mesh = rd_mat_init(eta_mesh_data, N_segment+1, 1);
-
-        rd_linspace(q_patch->xi_start, q_patch->xi_end, N_segment+1, &xi_mesh);
-        rd_linspace(q_patch->eta_start, q_patch->eta_end, N_segment+1, &eta_mesh);
-        
-        cblas_dcopy(N_segment, xi_mesh_data, 1, initial_guesses_xi_data, 1);
-        cblas_dcopy(N_segment, xi_mesh_data, 1, initial_guesses_xi_data+N_segment, 1);
-        cblas_dcopy(N_segment, &(q_patch->xi_start), 0, initial_guesses_xi_data+2*N_segment, 1);
-        cblas_dcopy(N_segment, &(q_patch->xi_end), 0, initial_guesses_xi_data+3*N_segment, 1);
-
-        initial_guesses_xi_mat = rd_mat_init(initial_guesses_xi_data, N_segment*4, 1);
-
-        cblas_dcopy(N_segment, &(q_patch->eta_start), 0, initial_guesses_eta_data, 1);
-        cblas_dcopy(N_segment, &(q_patch->eta_end), 0, initial_guesses_eta_data+N_segment, 1);
-        cblas_dcopy(N_segment, eta_mesh_data, 1, initial_guesses_eta_data+2*N_segment, 1);
-        cblas_dcopy(N_segment, eta_mesh_data, 1, initial_guesses_eta_data+3*N_segment, 1);
-
-        initial_guesses_eta_mat = rd_mat_init(initial_guesses_eta_data, N_segment*4, 1);
+        default_initial_guesses(q_patch, N, &initial_guesses_xi_mat, &initial_guesses_eta_mat, initial_guesses_xi_data, initial_guesses_eta_data);
 
         initial_guesses_xi = &initial_guesses_xi_mat;
         initial_guesses_eta = &initial_guesses_eta_mat;
@@ -269,15 +275,15 @@ inverse_M_p_return_type_t q_patch_inverse_M_p(q_patch_t *q_patch, double x, doub
         v.mat_data[0] = initial_guesses_xi->mat_data[k];
         v.mat_data[1] = initial_guesses_eta->mat_data[k];
 
-        //newton solve with max iterations 100 and error tolerance given by q_patch
-        for (MKL_INT i = 0; i < 100; i++) {
+        //newton solve with max iterations 1000 and error tolerance given by q_patch
+        for (MKL_INT i = 0; i < 1000; i++) {
             // evaluates difference between solutions in real space
             q_patch_evaluate_M_p(q_patch, rd_mat_init(v.mat_data, 1, 1), rd_mat_init(v.mat_data+1, 1, 1), &M_p_v_x, &M_p_v_y);
             vdSub(2, f_v_data, xy_exact_data, f_v_data);
             
             // convergence threshold
             vdSub(2, v_data, v_prev_data, v_diff_data);
-            if (fabs(f_v_data[cblas_idamax(2, f_v_data, 1)]) < q_patch->eps_xy && cblas_dnrm2(2, v_diff_data, 1) < q_patch->eps_xy) {
+            if (fabs(f_v_data[cblas_idamax(2, f_v_data, 1)]) < q_patch->eps_xy && fabs(v_diff_data[0]) < q_patch->eps_xi_eta && fabs(v_diff_data[1]) < q_patch->eps_xi_eta) {
                 converged = 1;
                 break;
             }
@@ -773,6 +779,9 @@ void apply_w(q_patch_t *main_patch, rd_mat_t w_unnormalized, q_patch_t *window_p
     double window_w;
     rd_mat_t window_w_mat = rd_mat_init(&window_w, 1, 1);
 
+    bool converged;
+    bool in_VpR;
+
     for (int i = 0; i < overlap_X.rows; i++) { 
         MKL_INT j_lst_data[overlap_X.columns];
         ri_mat_t j_lst = ri_mat_init(j_lst_data, overlap_X.columns, 1);
@@ -785,12 +794,37 @@ void apply_w(q_patch_t *main_patch, rd_mat_t w_unnormalized, q_patch_t *window_p
         for (int j_idx = 0; j_idx < overlap_X.columns; j_idx++) {
             int j = j_lst_data[j_idx];
             MKL_INT idx = sub2ind(overlap_X.rows, overlap_X.columns, (sub_t) {i, j});
+            
+            MKL_INT N = 20;
+            MKL_INT N_segment = ceil(N/4.0);
+            double initial_guesses_xi_data[N_segment*4]; double initial_guesses_eta_data[N_segment*4];
+            rd_mat_t initial_guesses_xi_mat; rd_mat_t initial_guesses_eta_mat;
+            if (initial_guesses_xi == NULL || initial_guesses_eta == NULL) {
+                default_initial_guesses(main_patch, N, &initial_guesses_xi_mat, &initial_guesses_eta_mat, initial_guesses_xi_data, initial_guesses_eta_data);
 
-            inverse_M_p_return_type_t window_patch_xi_eta = q_patch_inverse_M_p(window_patch, overlap_X.mat_data[idx], overlap_Y.mat_data[idx], initial_guesses_xi, initial_guesses_eta);
-            window_patch_xi = window_patch_xi_eta.xi;
-            window_patch_eta = window_patch_xi_eta.eta;
+                initial_guesses_xi = &initial_guesses_xi_mat;
+                initial_guesses_eta = &initial_guesses_eta_mat;
+            }
+            converged = false;
+            for (int initial_guesses_idxs = 0; initial_guesses_idxs < N; initial_guesses_idxs++) {
+                inverse_M_p_return_type_t window_patch_xi_eta = q_patch_inverse_M_p(window_patch, overlap_X.mat_data[idx], overlap_Y.mat_data[idx], initial_guesses_xi, initial_guesses_eta);
+                window_patch_xi = window_patch_xi_eta.xi;
+                window_patch_eta = window_patch_xi_eta.eta;
+                converged = window_patch_xi_eta.converged;
 
-            if(window_patch_xi_eta.converged) {
+                if(window_patch_w_xi_fixed) {
+                    in_VpR = window_patch_xi >= window_patch->xi_start && window_patch_xi <= window_patch->xi_end;
+                }
+                else {
+                    in_VpR = window_patch_eta >= window_patch->eta_start && window_patch_eta <= window_patch->eta_end;
+                }
+
+                if (converged && in_VpR) {
+                    break;
+                }
+            }
+
+            if(converged && in_VpR) {
                 MKL_INT xi_j = overlap_XI_j.mat_data[idx];
                 MKL_INT eta_j = overlap_ETA_j.mat_data[idx];
                 MKL_INT f_idx = sub2ind(main_patch->n_eta, main_patch->n_xi, (sub_t) {eta_j, xi_j});
@@ -803,7 +837,10 @@ void apply_w(q_patch_t *main_patch, rd_mat_t w_unnormalized, q_patch_t *window_p
                 main_patch->f_XY->mat_data[f_idx] = main_patch->f_XY->mat_data[f_idx] * w_unnormalized.mat_data[idx] / (w_unnormalized.mat_data[idx] + window_w);
                 initial_guesses_xi = &window_patch_xi_mat;
                 initial_guesses_eta = &window_patch_eta_mat;
-            } else {
+            } else if (!converged) {
+                print_matrix(*initial_guesses_xi);
+                printf("\n");
+                print_matrix(*initial_guesses_eta);
                 printf("Nonconvergence in computing C norm!!!\n");
             }
         }

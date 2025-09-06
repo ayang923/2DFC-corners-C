@@ -59,8 +59,6 @@ void FC2D(scalar_func_2D_t f, double h, curve_seq_t curve_seq, double eps_xi_eta
         }
     }
 
-    printf("%f, %f, %f, %f\n", x_min, x_max, y_min, y_max);
-
     double boundary_X_data[curve_seq_boundary_mesh_num_el(&curve_seq, n_r)];
     double boundary_Y_data[curve_seq_boundary_mesh_num_el(&curve_seq, n_r)];
     rd_mat_t boundary_X = rd_mat_init_no_shape(boundary_X_data);
@@ -90,16 +88,6 @@ void FC2D(scalar_func_2D_t f, double h, curve_seq_t curve_seq, double eps_xi_eta
     end = clock();
     printf("Time: %f\n", ((double) (end-start))/CLOCKS_PER_SEC);
 
-    FILE *fp;
-    fp = freopen("output.txt", "w", stdout);
-
-    if (fp == NULL) {
-        perror("Error opening file");
-        return;
-    }
-
-    print_matrix(f_R);
-
-    fclose(fp);
-    freopen("/dev/tty", "w", stdout);
+    
+    printf("FC error: %e\n", r_cartesian_mesh_compute_fc_error(&r_cartesian_mesh_obj, f, 2, boundary_X, boundary_Y));
 }
