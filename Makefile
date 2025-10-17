@@ -1,5 +1,5 @@
 CC = icx
-CFLAGS = -Wall -Wextra -Iinclude/  -qmkl=sequential 
+CFLAGS = -Wall -Wextra -Iinclude/  -qmkl -O3 -ipo
 # -g -fsanitize=undefined,address -fno-omit-frame-pointer
 
 TARGETS = teardrop_2DFC
