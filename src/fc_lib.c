@@ -65,11 +65,13 @@ void fcont_gram_blend_S(rd_mat_t fx, MKL_INT d, rd_mat_t A, rd_mat_t Q, rd_mat_t
         }
     }
 
+    double data_projection[d*fx.columns];
     double fcont_no_boundary[A.rows*fx.columns];
+    
+    cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, d, fx.columns, d, 1.0, Q.mat_data, d, f_matching_data, d, 0.0, data_projection, d);
 
-    cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, d, fx.columns, d, 1.0, Q.mat_data, d, f_matching_data, d, 0, f_matching_data, d);
-    cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, A.rows, fx.columns, d, 1.0, A.mat_data, A.rows, f_matching_data, d, 0.0, fcont_no_boundary, A.rows);
-
+    cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, A.rows, fx.columns, d, 1.0, A.mat_data, A.rows, data_projection, d, 0.0, fcont_no_boundary, A.rows);
+    
     for (int j = 0; j < fcont->columns; j++) {
         for (int i = 0; i < fcont->rows-1; i++) {
             MKL_INT fcont_idx = sub2ind(fcont->rows, fcont->columns, (sub_t) {i, j});
