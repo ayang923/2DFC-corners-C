@@ -10,17 +10,20 @@
 #include "time.h"
 #include "fc2D_lib.h"
 
+const double ALPH = 0.01;
+
 double f(double x, double y) {
-    return 4+(1+pow(x, 2) + pow(y, 2))*(sin(2.5*M_PI*x-0.5)+cos(2*M_PI*y-0.5));
+  //    return 4+(1+pow(x, 2) + pow(y, 2))*(sin(2.5*M_PI*x-0.5)+cos(2*M_PI*y-0.5));
+    return -(pow(x+1, 2)+pow(y+1, 2))*sin(M_PI*(x-0.1))*cos(M_PI*y);
 }
 
 double l_1(double theta) {
     return 2*sin(theta*M_PI);
+    
 }
 
 double l_2(double theta) {
-    double alph = 1.0/6.0;;
-    double bet = tan(alph*M_PI/2);
+    double bet = tan(ALPH*M_PI/2);
     return -bet * sin(theta*2*M_PI);
 }
 
@@ -29,8 +32,7 @@ double l_1_prime(double theta) {
 }
 
 double l_2_prime(double theta) {
-    double alph = 1.0/6.0;;
-    double bet = tan(alph*M_PI/2);
+    double bet = tan(ALPH*M_PI/2);
     return -2*bet*M_PI*cos(theta*2*M_PI);
 }
 
@@ -39,18 +41,17 @@ double l_1_dprime(double theta) {
 }
 
 double l_2_dprime(double theta) {
-    double alph = 1.0/6.0;;
-    double bet = tan(alph*M_PI/2);
+    double bet = tan(ALPH*M_PI/2);
     return 4*bet*pow(M_PI, 2)*sin(theta*2*M_PI);
 }
 
 int main() {
 
-    double h = 0.0025;
+    double h = 0.0000125;
     //reading continuation matrices
     MKL_INT d = 7;
     MKL_INT C = 27;
-    MKL_INT n_r = 12;
+    MKL_INT n_r = 6;
 
     MKL_INT M = d+3;
 
@@ -65,13 +66,19 @@ int main() {
     sprintf(Q_fp, "fc_data/Q_d%d_C%d_r%d.txt", d, C, n_r);
     read_fc_matrix(d, C, n_r, A_fp, Q_fp, &A, &Q);
 
+    double h_tan = 1.5*h;
+    double n_frac_c = 0.025;
+    double h_norm = 16*h_tan;
+    double n_frac_S = 0.85;
+    MKL_INT n_curve = ceil(4.0/h_norm);
+    
     curve_seq_t curve_seq;
     curve_seq_init(&curve_seq);
-
+    
     curve_t curve_1;
-    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, 0, 1.0/10.0, 1.0/10.0, 0, 0, h);
+    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, n_curve, n_frac_c, n_frac_c, n_frac_S, n_frac_S, h_tan);
 
-    FC2D(f, h, curve_seq, 5e-15, 5e-15, d, C, n_r, A, Q, M);
+    FC2D(f, h, curve_seq, 1e-13, 1e-13, d, C, n_r, A, Q, M);
 
     return 0;
 }
