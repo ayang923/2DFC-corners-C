@@ -395,7 +395,7 @@ MKL_INT eta_overlap_mesh_num_el(q_patch_t *main_patch, double eta_corner, bool w
 void compute_eta_overlap_mesh(q_patch_t *main_patch, double eta_corner, bool window_patch_up, rd_mat_t *XI_overlap, rd_mat_t *ETA_overlap, ri_mat_t *XI_j, ri_mat_t *ETA_j);
 
 
-void apply_w(q_patch_t *main_patch, rd_mat_t w_unnormalized, q_patch_t *window_patch, w_param_t window_w_param, rd_mat_t overlap_X, rd_mat_t overlap_Y, ri_mat_t overlap_XI_j, ri_mat_t overlap_ETA_j, bool window_patch_w_xi_fixed);
+void apply_w(q_patch_t *main_patch, rd_mat_t w_unnormalized, q_patch_t *window_patch, w_param_t window_w_param, rd_mat_t overlap_X, rd_mat_t overlap_Y, ri_mat_t overlap_XI_j, ri_mat_t overlap_ETA_j, bool window_patch_w_xi_fixed, rd_mat_t *initial_guesses_xi, rd_mat_t *initial_guesses_eta);
 w_param_t apply_w_normalization_window(q_patch_t *main_patch, w_param_t main_w_param, q_patch_t *window_patch, double window_xi_corner, bool up_down);
 
 void q_patch_apply_w_normalization_xi_right(q_patch_t *main_patch, q_patch_t *window_patch) {
@@ -429,7 +429,17 @@ void q_patch_apply_w_normalization_xi_right(q_patch_t *main_patch, q_patch_t *wi
     rd_mat_t Y = rd_mat_init_no_shape(Y_data);
 
     q_patch_convert_to_XY(main_patch, XI, ETA, &X, &Y);
-    apply_w(main_patch, w_unnormalized, window_patch, window_w_param, X, Y, XI_j, ETA_j, true);
+
+    // initializes initial guesses
+    double initial_guesses_xi_data[20];
+    double initial_guesses_eta_data[20];
+
+    rd_mat_t initial_guesses_xi = rd_mat_init(initial_guesses_xi_data, 20, 1);
+    rd_mat_t initial_guesses_eta = rd_mat_init(initial_guesses_eta_data, 20, 1);
+
+    rd_linspace(window_xi_corner, window_patch->xi_end, 20, &initial_guesses_xi);
+    for (int i = 0; i < 20; i++) {initial_guesses_eta_data[i] = window_patch->eta_start;};
+    apply_w(main_patch, w_unnormalized, window_patch, window_w_param, X, Y, XI_j, ETA_j, true, &initial_guesses_xi, &initial_guesses_eta);
 }
 
 void q_patch_apply_w_normalization_xi_left(q_patch_t *main_patch, q_patch_t *window_patch) {
@@ -463,7 +473,17 @@ void q_patch_apply_w_normalization_xi_left(q_patch_t *main_patch, q_patch_t *win
     rd_mat_t Y = rd_mat_init_no_shape(Y_data);
 
     q_patch_convert_to_XY(main_patch, XI, ETA, &X, &Y);
-    apply_w(main_patch, w_unnormalized, window_patch, window_w_param, X, Y, XI_j, ETA_j, true);
+
+    double initial_guesses_xi_data[20];
+    double initial_guesses_eta_data[20];
+
+    rd_mat_t initial_guesses_xi = rd_mat_init(initial_guesses_xi_data, 20, 1);
+    rd_mat_t initial_guesses_eta = rd_mat_init(initial_guesses_eta_data, 20, 1);
+
+    rd_linspace(window_xi_corner, window_patch->xi_end, 20, &initial_guesses_xi);
+    for (int i = 0; i < 20; i++) {initial_guesses_eta_data[i] = window_patch->eta_start;};
+
+    apply_w(main_patch, w_unnormalized, window_patch, window_w_param, X, Y, XI_j, ETA_j, true, &initial_guesses_xi, &initial_guesses_eta);
 }
 
 void q_patch_apply_w_normalization_eta_up(q_patch_t *main_patch, q_patch_t *window_patch) {
@@ -498,7 +518,16 @@ void q_patch_apply_w_normalization_eta_up(q_patch_t *main_patch, q_patch_t *wind
 
     q_patch_convert_to_XY(main_patch, XI, ETA, &X, &Y);
 
-    apply_w(main_patch, w_unnormalized, window_patch, window_w_param, X, Y, XI_j, ETA_j, true);
+    double initial_guesses_xi_data[20];
+    double initial_guesses_eta_data[20];
+
+    rd_mat_t initial_guesses_xi = rd_mat_init(initial_guesses_xi_data, 20, 1);
+    rd_mat_t initial_guesses_eta = rd_mat_init(initial_guesses_eta_data, 20, 1);
+
+    rd_linspace(window_patch->xi_start,  window_xi_corner, 20, &initial_guesses_xi);
+    for (int i = 0; i < 20; i++) {initial_guesses_eta_data[i] = window_patch->eta_start;};
+    
+    apply_w(main_patch, w_unnormalized, window_patch, window_w_param, X, Y, XI_j, ETA_j, true, &initial_guesses_xi, &initial_guesses_eta);
 }
 
 void q_patch_apply_w_normalization_eta_down(q_patch_t *main_patch, q_patch_t *window_patch) {
@@ -532,7 +561,17 @@ void q_patch_apply_w_normalization_eta_down(q_patch_t *main_patch, q_patch_t *wi
     rd_mat_t Y = rd_mat_init_no_shape(Y_data);
 
     q_patch_convert_to_XY(main_patch, XI, ETA, &X, &Y);
-    apply_w(main_patch, w_unnormalized, window_patch, window_w_param, X, Y, XI_j, ETA_j, true);
+
+    double initial_guesses_xi_data[20];
+    double initial_guesses_eta_data[20];
+
+    rd_mat_t initial_guesses_xi = rd_mat_init(initial_guesses_xi_data, 20, 1);
+    rd_mat_t initial_guesses_eta = rd_mat_init(initial_guesses_eta_data, 20, 1);
+
+    rd_linspace(window_patch->xi_start,  window_xi_corner, 20, &initial_guesses_xi);
+    for (int i = 0; i < 20; i++) {initial_guesses_eta_data[i] = window_patch->eta_start;};
+
+    apply_w(main_patch, w_unnormalized, window_patch, window_w_param, X, Y, XI_j, ETA_j, true, &initial_guesses_xi, &initial_guesses_eta);
 }
 
 double compute_xi_corner(q_patch_t *main_patch, q_patch_t *window_patch, bool window_fix_xi, double window_fixed_edge, bool window_patch_right) {
@@ -698,7 +737,7 @@ void compute_xi_overlap_mesh(q_patch_t *main_patch, double xi_corner, bool windo
         MKL_INT eta_mesh_data[main_patch->n_eta];
         ri_mat_t eta_mesh = ri_mat_init(eta_mesh_data, main_patch->n_eta, 1);
 
-        ri_range(xi_corner_j, 1, main_patch->n_xi-1, &xi_mesh);
+        ri_range(main_patch->n_xi-1, -1,xi_corner_j,&xi_mesh);
         ri_range(0, 1, main_patch->n_eta-1, &eta_mesh);
 
         ri_meshgrid(xi_mesh, eta_mesh, XI_j, ETA_j);
@@ -738,7 +777,7 @@ void compute_eta_overlap_mesh(q_patch_t *main_patch, double eta_corner, bool win
         ri_mat_t eta_mesh = ri_mat_init(eta_mesh_data, overlap_n_eta, 1);
 
         ri_range(0, 1, main_patch->n_xi-1, &xi_mesh);
-        ri_range(eta_corner_j, 1, main_patch->n_eta-1, &eta_mesh);
+        ri_range(main_patch->n_eta-1, -1, eta_corner_j, &eta_mesh);
 
         ri_meshgrid(xi_mesh, eta_mesh, XI_j, ETA_j);
     }
@@ -765,10 +804,7 @@ void compute_eta_overlap_mesh(q_patch_t *main_patch, double eta_corner, bool win
     }
 }
 
-void apply_w(q_patch_t *main_patch, rd_mat_t w_unnormalized, q_patch_t *window_patch, w_param_t window_w_param, rd_mat_t overlap_X, rd_mat_t overlap_Y, ri_mat_t overlap_XI_j, ri_mat_t overlap_ETA_j, bool window_patch_w_xi_fixed) {
-    rd_mat_t *initial_guesses_xi = NULL;
-    rd_mat_t *initial_guesses_eta = NULL;
-
+void apply_w(q_patch_t *main_patch, rd_mat_t w_unnormalized, q_patch_t *window_patch, w_param_t window_w_param, rd_mat_t overlap_X, rd_mat_t overlap_Y, ri_mat_t overlap_XI_j, ri_mat_t overlap_ETA_j, bool window_patch_w_xi_fixed, rd_mat_t *initial_guesses_xi, rd_mat_t *initial_guesses_eta) {
     //preallocation for for loop
     double window_patch_xi;
     double window_patch_eta;
@@ -838,9 +874,6 @@ void apply_w(q_patch_t *main_patch, rd_mat_t w_unnormalized, q_patch_t *window_p
                 initial_guesses_xi = &window_patch_xi_mat;
                 initial_guesses_eta = &window_patch_eta_mat;
             } else if (!converged) {
-                print_matrix(*initial_guesses_xi);
-                printf("\n");
-                print_matrix(*initial_guesses_eta);
                 printf("Nonconvergence in computing C norm!!!\n");
             }
         }
@@ -879,7 +912,7 @@ w_param_t apply_w_normalization_window(q_patch_t *main_patch, w_param_t main_w_p
     rd_mat_t Y = rd_mat_init_no_shape(Y_data);
 
     q_patch_convert_to_XY(window_patch, XI, ETA, &X, &Y);
-    apply_w(window_patch, w_unnormalized, main_patch, main_w_param, X, Y, XI_j, ETA_j, !up_down);
+    apply_w(window_patch, w_unnormalized, main_patch, main_w_param, X, Y, XI_j, ETA_j, !up_down, NULL, NULL);
 
     return window_w_param;
 }
