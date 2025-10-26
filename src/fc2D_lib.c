@@ -88,6 +88,7 @@ void FC2D(scalar_func_2D_t f, double h, curve_seq_t curve_seq, double eps_xi_eta
     end = clock();
     printf("Time: %f\n", ((double) (end-start))/CLOCKS_PER_SEC);
 
+    printf("Nx=%d, Ny=%d\n", r_cartesian_mesh_obj.n_x, r_cartesian_mesh_obj.n_y);
     
     printf("FC error: %e\n", r_cartesian_mesh_compute_fc_error(&r_cartesian_mesh_obj, f, 2, boundary_X, boundary_Y));
 }

@@ -322,12 +322,39 @@ double r_cartesian_mesh_compute_fc_error(r_cartesian_mesh_obj_t *r_cartesian_mes
         }
     }
 
+    double f_max = 0;
+    for (int i = 0; i < n_y_err*n_x_err; i++) {
+        if (in_interior_err_data[i]) {
+	  f_max = fmax(f_max, f(R_X_err_data[i], R_Y_err_data[i]));
+        }
+    }
+    
     double fc_err = 0;
     for (int i = 0; i < n_y_err*n_x_err; i++) {
         if (in_interior_err_data[i]) {
             fc_err = fmax(fc_err, fabs(f(R_X_err_data[i], R_Y_err_data[i]) - intp_fc[i]));
         }
     }
+
+    printf("Absolute maximum error: %e\n", fc_err);
+    printf("Relative maximum error: %e\n", fc_err/f_max);
+
+    double f_l2 = 0;
+    for (int i = 0; i < n_y_err*n_x_err; i++) {
+        if (in_interior_err_data[i]) {
+	  f_l2 += pow(f(R_X_err_data[i], R_Y_err_data[i]), 2);
+        }
+    }
+
+    double fc_err_2 = 0;
+    for (int i = 0; i < n_y_err*n_x_err; i++) {
+        if (in_interior_err_data[i]) {
+	  fc_err_2 += pow(f(R_X_err_data[i], R_Y_err_data[i]) - intp_fc[i], 2);
+        }
+    }    
+
+    printf("Relative l2 error: %e\n", sqrt(fc_err_2)/sqrt(f_l2));
+    
     return fc_err;
 }
 
