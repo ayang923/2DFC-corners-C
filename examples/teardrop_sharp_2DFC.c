@@ -10,10 +10,11 @@
 #include "time.h"
 #include "fc2D_lib.h"
 
-const double ALPH = 0.5;
+const double ALPH = 0.01;
 
 double f(double x, double y) {
-  return exp(0.5*(x*x+y*y))*(sin(3*M_PI*x)+cos(2.5*M_PI*y));
+  //    return 4+(1+pow(x, 2) + pow(y, 2))*(sin(2.5*M_PI*x-0.5)+cos(2*M_PI*y-0.5));
+    return -(pow(x+1, 2)+pow(y+1, 2))*sin(M_PI*(x-0.1))*cos(M_PI*y);
 }
 
 double l_1(double theta) {
@@ -46,9 +47,9 @@ double l_2_dprime(double theta) {
 
 int main() {
 
-    double h = 0.01;
+    double h = 0.0000125;
     //reading continuation matrices
-    MKL_INT d = 9;
+    MKL_INT d = 7;
     MKL_INT C = 27;
     MKL_INT n_r = 6;
 
@@ -65,16 +66,17 @@ int main() {
     sprintf(Q_fp, "fc_data/Q_d%d_C%d_r%d.txt", d, C, n_r);
     read_fc_matrix(d, C, n_r, A_fp, Q_fp, &A, &Q);
 
-    double h_norm = 1.5*h;
-    double n_frac_c = 0.1;
-    double n_frac_S = 0.7;
-    MKL_INT n_curve = 0;
+    double h_tan = 1.5*h;
+    double n_frac_c = 0.025;
+    double h_norm = 16*h_tan;
+    double n_frac_S = 0.85;
+    MKL_INT n_curve = ceil(4.0/h_norm);
     
     curve_seq_t curve_seq;
     curve_seq_init(&curve_seq);
     
     curve_t curve_1;
-    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, n_curve, n_frac_c, n_frac_c, n_frac_S, n_frac_S, h_norm);
+    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, n_curve, n_frac_c, n_frac_c, n_frac_S, n_frac_S, h_tan);
 
     FC2D(f, h, curve_seq, 1e-13, 1e-13, d, C, n_r, A, Q, M);
 
