@@ -9,7 +9,7 @@
 #include "fc_lib.h"
 
 double f(double x, double y) {
-    return 4+(1+pow(x, 2) + pow(y, 2))*(sin(2.5*M_PI*x-0.5)+cos(2*M_PI*y-0.5));
+    return exp(0.5*(x*x+y*y))*(sin(3*M_PI*x)+cos(2.5*M_PI*y));
 }
 
 double l_1(double theta) {
@@ -43,9 +43,10 @@ double l_2_dprime(double theta) {
 }
 
 int main() {
-    double h = 0.000625;
+    double h = 0.0025;
+    
     //reading continuation matrices
-    MKL_INT d = 4;
+    MKL_INT d = 7;
     MKL_INT C = 27;
     MKL_INT n_r = 6;
 
@@ -61,13 +62,20 @@ int main() {
     sprintf(A_fp, "fc_data/A_d%d_C%d_r%d.txt", d, C, n_r);
     sprintf(Q_fp, "fc_data/Q_d%d_C%d_r%d.txt", d, C, n_r);
     read_fc_matrix(d, C, n_r, A_fp, Q_fp, &A, &Q);
+
+    double n_frac_C = 0.1;
+    double n_frac_S = 0.67;
+    double h_norm = h;
+    double h_tan = h_norm;
+    MKL_INT n_curve = 0;
+    
     curve_seq_t curve_seq;
     curve_seq_init(&curve_seq);
 
     curve_t curve_1;
-    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, 0, 1.0/10.0, 1.0/10.0, 0, 0, h);
+    curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, n_curve, n_frac_C, n_frac_C, n_frac_S, n_frac_S, h_norm);
 
-    FC2D(f, h, curve_seq, 5e-15, 5e-15, d, C, n_r, A, Q, M);
+    FC2D(f, h, curve_seq, 1e-13, 1e-13, d, C, n_r, A, Q, M);
 
     return 0;
 }
