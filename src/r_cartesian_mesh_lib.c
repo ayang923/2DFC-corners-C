@@ -203,8 +203,11 @@ void r_cartesian_mesh_interpolate_patch(r_cartesian_mesh_obj_t *r_cartesian_mesh
 
         locally_compute_return_type_t f_locally_compute = q_patch_locally_compute(q_patch, xi_point, eta_point, M);
         if(f_locally_compute.in_range) {
-            f_R_patch[i] = f_locally_compute.f_xy;
+            f_R_patch[i] = f_locally_compute.f_xy;	      
         }
+	else {
+            printf("WARNING: interpolating point not in patch\n");
+	}
     }
     
     for (int i = 0; i < n_in_patch; i++) {
