@@ -13,7 +13,7 @@
 const double ALPH = 0.5;
 
 double f(double x, double y) {
-  return exp(0.5*(x*x+y*y))*(sin(3*M_PI*x)+cos(2.5*M_PI*y));
+  return exp(0.5*(x*x+y*y))*(sin(10*M_PI*x)+cos(10*M_PI*y));
 }
 
 double l_1(double theta) {
@@ -46,9 +46,9 @@ double l_2_dprime(double theta) {
 
 int main() {
 
-    double h = 0.01;
+    double h = 1.5625e-04;
     //reading continuation matrices
-    MKL_INT d = 9;
+    MKL_INT d = 4;
     MKL_INT C = 27;
     MKL_INT n_r = 6;
 
@@ -67,7 +67,7 @@ int main() {
 
     double h_norm = 1.5*h;
     double n_frac_c = 0.1;
-    double n_frac_S = 0.7;
+    double n_frac_S = 0.6;
     MKL_INT n_curve = 0;
     
     curve_seq_t curve_seq;
