@@ -8,4 +8,5 @@
 
 void FC2D(scalar_func_2D_t f, double h, curve_seq_t curve_seq, double eps_xi_eta, double eps_xy, MKL_INT d, MKL_INT C, MKL_INT n_r, rd_mat_t A, rd_mat_t Q, MKL_INT M);
 
+void FC2D_heap(scalar_func_2D_t f, double h, curve_seq_t curve_seq, double eps_xi_eta, double eps_xy, MKL_INT d, MKL_INT C, MKL_INT n_r, rd_mat_t A, rd_mat_t Q, MKL_INT M);
 #endif
