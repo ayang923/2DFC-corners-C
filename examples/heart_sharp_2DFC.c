@@ -70,9 +70,9 @@ int main() {
 
 
     double n_frac_c = 0.1;
-    double n_frac_S = 0.7;
+    double n_frac_S = 0.6;
 
-    double h = 0.00025;
+    double h = 0.0005;
     double h_tan = 5.5*h;
     double h_norm = h_tan;
     MKL_INT n_curve = ceil(3.5/h_tan);
