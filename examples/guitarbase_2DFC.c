@@ -10,10 +10,8 @@
 #include "time.h"
 #include "fc2D_lib.h"
 
-const double ALPH = 1.9;
-
 double f(double x, double y) {
-  return 4 + (1+pow(x, 2)+pow(y, 2))*(sin(2.5*M_PI*x-0.5)+cos(2*M_PI*y-0.5));
+  return 4 + (1+pow(x, 2)+pow(y, 2))*(sin(10.5*M_PI*x-0.5)+cos(10*M_PI*y-0.5));
 }
 
 double l1_1(double theta) {
@@ -207,7 +205,7 @@ double l2dp_4(double theta) {
 
 int main() {
     //reading continuation matrices
-    MKL_INT d = 7;
+    MKL_INT d = 6;
     MKL_INT C = 27;
     MKL_INT n_r = 6;
 
