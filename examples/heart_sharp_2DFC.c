@@ -51,7 +51,7 @@ double l_2_dprime(double theta) {
 
 int main() {
     //reading continuation matrices
-    MKL_INT d = 8;
+    MKL_INT d = 7;
     MKL_INT C = 27;
     MKL_INT n_r = 6;
 
