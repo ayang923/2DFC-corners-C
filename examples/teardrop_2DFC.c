@@ -50,9 +50,9 @@ double l_2_dprime(double theta) {
 
 int main() {
 
-    double h = 0.005;
+    double h = 1.5625e-4;
     //reading continuation matrices
-    MKL_INT d = 8;
+    MKL_INT d = 4;
     MKL_INT C = 27;
     MKL_INT n_r = 6;
 
@@ -80,7 +80,7 @@ int main() {
     curve_t curve_1;
     curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, n_curve, n_frac_c, n_frac_c, n_frac_S, n_frac_S, h_norm);
 
-    FC2D(f, h, curve_seq, 1e-13, 1e-13, d, C, n_r, A, Q, M, 576, 486);
+    FC2D(f, h, curve_seq, 1e-13, 1e-13, d, C, n_r, A, Q, M, -1, -1);
 
     return 0;
 }

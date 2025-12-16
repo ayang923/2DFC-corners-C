@@ -14,6 +14,10 @@ double f(double x, double y) {
   return 4 + (1+pow(x, 2)+pow(y, 2))*(sin(10.5*M_PI*x-0.5)+cos(10*M_PI*y-0.5));
 }
 
+// double f(double x, double y) {
+//   return pow(3*M_PI, 2) * sin(3*M_PI*x-1) * sin(3*M_PI*y-1);
+// }
+
 double l1_1(double theta) {
     return 2*sin(0.25*M_PI*theta);
 }
@@ -205,7 +209,7 @@ double l2dp_4(double theta) {
 
 int main() {
     //reading continuation matrices
-    MKL_INT d = 6;
+    MKL_INT d = 5;
     MKL_INT C = 27;
     MKL_INT n_r = 6;
 
@@ -277,7 +281,7 @@ int main() {
     curve_seq_add_curve(&curve_seq, &curve_4, (scalar_func_t) l1_4, (scalar_func_t) l2_4, (scalar_func_t) l1p_4, (scalar_func_t) l2p_4, (scalar_func_t) l1dp_4, (scalar_func_t) l2dp_4, n_curve, n_frac_C_0, n_frac_C_1, n_frac_S_0, n_frac_S_1, h_tan);
 
     
-    FC2D(f, h, curve_seq, 1e-13, 1e-13, d, C, n_r, A, Q, M);
+    FC2D(f, h, curve_seq, 1e-13, 1e-13, d, C, n_r, A, Q, M, -1, -1);
 
     return 0;
 }

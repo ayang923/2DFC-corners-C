@@ -78,7 +78,7 @@ int main() {
     curve_t curve_1;
     curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, n_curve, n_frac_c, n_frac_c, n_frac_S, n_frac_S, h_tan);
 
-    FC2D(f, h, curve_seq, 1e-13, 1e-13, d, C, n_r, A, Q, M);
+    FC2D_heap(f, h, curve_seq, 1e-13, 1e-13, d, C, n_r, A, Q, M, -1, -1);
 
     return 0;
 }
