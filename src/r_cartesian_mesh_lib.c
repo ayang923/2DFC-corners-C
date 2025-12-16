@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "mkl_dfti.h"
+#include "time.h"
+
 
 #include "r_cartesian_mesh_lib.h"
 #include "num_linalg_lib.h"
@@ -402,11 +404,41 @@ void r_cartesian_mesh_fill_interior(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj
 
 static inline MKL_Complex16 z(double r, double i) {MKL_Complex16 z; z.real = r; z.imag = i; return z;}
 
-double r_cartesian_mesh_compute_fc_error(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, scalar_func_2D_t f, MKL_INT rho_err, rd_mat_t boundary_X, rd_mat_t boundary_Y) {
+double r_cartesian_mesh_compute_fc_error(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, scalar_func_2D_t f, MKL_INT rho_err, rd_mat_t boundary_X, rd_mat_t boundary_Y, MKL_INT n_x_fft, MKL_INT n_y_fft) {
+    // for readability
+    double n_x_h = ((double) n_x_fft)/2;
+    double n_y_h = ((double) n_y_fft)/2;
+
+    // Timing the FFT buffer fill + FFT
+    clock_t start_fft, end_fft;
+    start_fft = clock();
+
+    // converts real numbers to complex and also row-major ordering
+    MKL_Complex16 buf[n_y_fft][n_x_fft];
+    memset(buf, 0, sizeof(buf));
+
+    for (int i = 0; i < r_cartesian_mesh_obj->n_y; i++) {
+        for (int j = 0; j < r_cartesian_mesh_obj->n_x; j++) {
+            buf[i][j] = z(r_cartesian_mesh_obj->f_R->mat_data[sub2ind(r_cartesian_mesh_obj->n_y, r_cartesian_mesh_obj->n_x, (sub_t) {i, j})], 0.0);
+        }
+    }
+
+    DFTI_DESCRIPTOR_HANDLE f_hand;
+    MKL_LONG f_dims[2] = {n_y_fft, n_x_fft};
+    DftiCreateDescriptor(&f_hand, DFTI_DOUBLE, DFTI_COMPLEX, 2, f_dims);
+    DftiSetValue(f_hand, DFTI_FORWARD_SCALE, 1.0/(n_x_fft*n_y_fft));
+    DftiCommitDescriptor(f_hand);
+    DftiComputeForward(f_hand, buf);
+
+    end_fft = clock();
+    printf("[FC error] FFT timing: %f seconds\n", ((double)(end_fft - start_fft)) / CLOCKS_PER_SEC);
+
+    DftiFreeDescriptor(&f_hand);
+
     // computes error meshes
     double h_err = r_cartesian_mesh_obj->h / (double) rho_err;
-    double x_err_end = r_cartesian_mesh_obj->x_end + r_cartesian_mesh_obj->h - h_err;
-    double y_err_end = r_cartesian_mesh_obj->y_end + r_cartesian_mesh_obj->h - h_err;
+    double x_err_end = r_cartesian_mesh_obj->x_start + n_x_fft * r_cartesian_mesh_obj->h - h_err;
+    double y_err_end = r_cartesian_mesh_obj->y_start + n_y_fft * r_cartesian_mesh_obj->h - h_err;
     MKL_INT n_x_err = round((x_err_end -r_cartesian_mesh_obj->x_start)/h_err) + 1;
     MKL_INT n_y_err = round((y_err_end -r_cartesian_mesh_obj->y_start)/h_err) + 1;
 
@@ -429,31 +461,8 @@ double r_cartesian_mesh_compute_fc_error(r_cartesian_mesh_obj_t *r_cartesian_mes
     ri_mat_t in_interior_err = ri_mat_init_no_shape(in_interior_err_data);
     inpolygon_mesh(R_X_err, R_Y_err, boundary_X, boundary_Y, &in_interior_err);
 
-    // for readibility
-    MKL_INT n_x = r_cartesian_mesh_obj->n_x;
-    MKL_INT n_y = r_cartesian_mesh_obj->n_y;
-    double n_x_h = ((double) n_x)/2;
-    double n_y_h = ((double) n_y)/2;
-
-    MKL_INT n_x_diff = n_x_err - n_x;
-    MKL_INT n_y_diff = n_y_err - n_y;
-
-    // converts real numbers to complex and also row-major ordering
-    MKL_Complex16 buf[n_y][n_x];
-
-    for (int i = 0; i < n_y; i++) {
-        for (int j = 0; j < n_x; j++) {
-        buf[i][j] = z(r_cartesian_mesh_obj->f_R->mat_data[sub2ind(n_y, n_x, (sub_t) {i, j})], 0.0);
-        }
-    }
-
-    DFTI_DESCRIPTOR_HANDLE f_hand;
-    MKL_LONG f_dims[2] = {n_y, n_x};
-    DftiCreateDescriptor(&f_hand, DFTI_DOUBLE, DFTI_COMPLEX, 2, f_dims);
-    DftiSetValue(f_hand, DFTI_FORWARD_SCALE, 1.0/(n_x*n_y));
-    DftiCommitDescriptor(f_hand);
-    DftiComputeForward(f_hand, buf);
-    DftiFreeDescriptor(&f_hand);
+    MKL_INT n_x_diff = n_x_err - n_x_fft;
+    MKL_INT n_y_diff = n_y_err - n_y_fft;
 
     // creating arrays of zeroes that will have relevant fft coefffs filled in
     MKL_Complex16 buf_padded[n_y_err][n_x_err];
@@ -468,21 +477,21 @@ double r_cartesian_mesh_compute_fc_error(r_cartesian_mesh_obj_t *r_cartesian_mes
 
     // padding q2
     for(int i = 0; i < ceil(n_y_h); i++) {
-        for (int j = ceil(n_x_h); j < n_x; j++) {
+        for (int j = ceil(n_x_h); j < n_x_fft; j++) {
             buf_padded[i][n_x_diff+j] = buf[i][j];
         }
     }
 
     // padding q3
-    for(int i = ceil(n_y_h); i < n_y; i++) {
+    for(int i = ceil(n_y_h); i < n_y_fft; i++) {
         for (int j = 0; j < ceil(n_x_h); j++) {
             buf_padded[n_y_diff+i][j] = buf[i][j];
         }
     }
 
     // padding q4
-    for(int i = ceil(n_y_h); i < n_y; i++) {
-        for (int j = ceil(n_x_h); j < n_x; j++) {
+    for(int i = ceil(n_y_h); i < n_y_fft; i++) {
+        for (int j = ceil(n_x_h); j < n_x_fft; j++) {
             buf_padded[n_y_diff+i][n_x_diff+j] = buf[i][j];
         }
     }

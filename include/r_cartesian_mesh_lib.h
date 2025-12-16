@@ -36,7 +36,7 @@ void r_cartesian_mesh_interpolate_patch_heap(r_cartesian_mesh_obj_t *r_cartesian
 
 void r_cartesian_mesh_fill_interior(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, scalar_func_2D_t f);
 
-double r_cartesian_mesh_compute_fc_error(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, scalar_func_2D_t f, MKL_INT rho_err, rd_mat_t boundary_X, rd_mat_t boundary_Y);
+double r_cartesian_mesh_compute_fc_error(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, scalar_func_2D_t f, MKL_INT rho_err, rd_mat_t boundary_X, rd_mat_t boundary_Y, MKL_INT n_x_fft, MKL_INT n_y_fft);
 
 double r_cartesian_mesh_compute_fc_error_heap(r_cartesian_mesh_obj_t *r_cartesian_mesh_obj, scalar_func_2D_t f, MKL_INT rho_err, rd_mat_t boundary_X, rd_mat_t boundary_Y);
 
