@@ -57,6 +57,9 @@ int main() {
 
     MKL_INT M = d+3;
 
+    MKL_INT n_x_padded = 10368;
+    MKL_INT n_y_padded = 16384;
+
     double A_data[fc_A_numel(d, C, n_r)];
     double Q_data[fc_Q_numel(d)];
     rd_mat_t A = rd_mat_init_no_shape(A_data);
@@ -86,7 +89,7 @@ int main() {
     curve_t curve_1;
     curve_seq_add_curve(&curve_seq, &curve_1, (scalar_func_t) l_1, (scalar_func_t) l_2, (scalar_func_t) l_1_prime, (scalar_func_t) l_2_prime, (scalar_func_t) l_1_dprime, (scalar_func_t) l_2_dprime, n_curve, n_frac_c, n_frac_c, n_frac_S, n_frac_S, h_tan);
 
-    FC2D(f, h, curve_seq, 1e-14, 1e-14, d, C, n_r, A, Q, M, -1, -1);
+    FC2D(f, h, curve_seq, 1e-14, 1e-14, d, C, n_r, A, Q, M, n_x_padded, n_y_padded);
 
     return 0;
 }
