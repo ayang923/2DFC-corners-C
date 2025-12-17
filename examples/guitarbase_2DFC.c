@@ -208,10 +208,15 @@ double l2dp_4(double theta) {
 }
 
 int main() {
+    double h = 0.00025;
+
     //reading continuation matrices
     MKL_INT d = 5;
     MKL_INT C = 27;
     MKL_INT n_r = 6;
+
+    MKL_INT n_x_padded = 5832;
+    MKL_INT n_y_padded = 8748;
 
     MKL_INT M = d+3;
 
@@ -225,8 +230,6 @@ int main() {
     sprintf(A_fp, "fc_data/A_d%d_C%d_r%d.txt", d, C, n_r);
     sprintf(Q_fp, "fc_data/Q_d%d_C%d_r%d.txt", d, C, n_r);
     read_fc_matrix(d, C, n_r, A_fp, Q_fp, &A, &Q);
-
-    double h = 0.00025;
    
     double n_frac_C_0;
     double n_frac_C_1;
@@ -281,7 +284,7 @@ int main() {
     curve_seq_add_curve(&curve_seq, &curve_4, (scalar_func_t) l1_4, (scalar_func_t) l2_4, (scalar_func_t) l1p_4, (scalar_func_t) l2p_4, (scalar_func_t) l1dp_4, (scalar_func_t) l2dp_4, n_curve, n_frac_C_0, n_frac_C_1, n_frac_S_0, n_frac_S_1, h_tan);
 
     
-    FC2D(f, h, curve_seq, 1e-13, 1e-13, d, C, n_r, A, Q, M, -1, -1);
+    FC2D(f, h, curve_seq, 1e-13, 1e-13, d, C, n_r, A, Q, M, n_x_padded, n_y_padded);
 
     return 0;
 }
